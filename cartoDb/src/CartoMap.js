@@ -117,5 +117,52 @@ Ext.define('CartoDb.CartoMap', {
         this.setBounds(event.target.getBounds());
         var center = event.target.getCenter();
         this.setCenter([center.lat, center.lng]);
+    },
+
+    addLayer: function(data, callback) {
+        layerDetails.map = this.getMap();
+        layerDetails.user_name = (data.layerDetails.user_name) ? data.layerDetails.user_name : this.getUserName();
+        this.createLayer(data.layerDetails, function(err, layer){
+            if(err){
+                console.log(err);
+                callback("Error Creating Layer: " + err);
+            }else{
+                if(data.createStore){
+                    this.createDataStore({data: data, layer: layer}, function(rec, op, success){
+
+                    });
+                }else{
+                    callback(null, layer);
+                }
+            }
+        }.bind(this));
+    },
+
+    createDataStore: function(data, cb) {
+        if(data.layerDetails.sublayers && data.layerDetails.sublayers.length > 0){
+            data.layerDetails.sublayers.forEach(function(item){
+                if(item.createStore){
+                   
+                }
+                if(item.autoLoad){
+                    store.load({
+                        scope: this,
+                        callback: cb
+                    });
+                }else{
+
+                }
+            }.bind(this));
+        }else{
+             var store = Ext.create('Ext.data.Store',{
+
+                });
+               if(item.autoLoad){
+                    store.load({
+                        scope: this,
+                        callback: cb
+                    });
+                } 
+        }
     }
 });
