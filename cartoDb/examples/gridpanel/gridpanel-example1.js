@@ -14,15 +14,16 @@ Ext.onReady(function () {
             type: 'carto',
             username: 'crestonedigital',
             table: 'us_metro_stations'
-        }
+        },
+        autoLoad: true
     });
 
     Ext.create('Ext.container.Viewport', {
         layout: 'fit',
         items: [{
             xtype: 'grid',
-            title: 'Metro Stops',
-            store: Ext.data.StoreManager.lookup('simpsonsStore'),
+            title: 'United States - Metro Stops',
+            store: Ext.data.StoreManager.lookup('metrostopsStore'),
             columns: [
                 { text: 'City', dataIndex: 'city' },
                 { text: 'Name', dataIndex: 'name' }
