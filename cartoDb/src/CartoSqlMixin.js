@@ -13,14 +13,16 @@ Ext.define('CartoDb.CartoSqlMixin', {
      * @param  {} table
      */
     sqlBuilder2_0: function (params) {
-        
-        var sql = 'Select ' + params.select.join(',') + 
-          ' FROM ' + params.table + ' Where 1 = 1 ';
+        debugger;
+        var fields = '*';
+        if (Ext.isArray(params.select)) {
+            fields = params.select.join(',');
+        }
+
+        var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' WHERE 1 = 1 ';
         sql += this.whereClauseBuilder2_0(params);
         return sql;
     },
-    
-    
     
     /**
      * @param  {} params

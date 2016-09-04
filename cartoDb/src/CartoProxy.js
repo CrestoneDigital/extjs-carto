@@ -5,6 +5,13 @@ Ext.define('CartoDb.CartoProxy', {
         'CartoDb.CartoSqlMixin'
     ],
     alternateClassName: ['CartoDb.CartoProxy.CartoAjax'],
+
+    reader: {
+        type: 'json',
+        rootProperty: 'rows',
+        totalProperty: 'total_rows'
+    },
+
     config: {
         url: "https://{{account}}.carto.com/api/v2/sql",
         table: '',
@@ -20,6 +27,7 @@ Ext.define('CartoDb.CartoProxy', {
      * @return {String} The url
      */
     buildUrl: function(request) {
+        console.log("here")
         var queryParams = this.getQueryParams();
         var url = this.getUrl();
         url = url.replace(/{{account}}/, this.getUsername());
@@ -31,6 +39,7 @@ Ext.define('CartoDb.CartoProxy', {
     },
 
     getQueryParams: function(){
+        console.log("here2")
         var params     = {};
         params.select  = this.getSelect();
         params.table   = this.getTable();
