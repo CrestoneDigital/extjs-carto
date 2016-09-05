@@ -10,9 +10,12 @@ Ext.onReady(function () {
 
     Ext.create('Ext.data.Store', {
         storeId: 'metrostopsStore',
-         sorters: [{
-            property: 'cartodb_id',
-            direction: 'DESC'
+        remoteFilter: true,
+        remoteSort: true,
+        // sorters: 'city',
+        sorters: [{
+            property: 'city',
+            direction: 'ASC'
         }, 'name'],
         proxy: {
             type: 'carto',
@@ -29,9 +32,20 @@ Ext.onReady(function () {
             title: 'United States - Metro Stops',
             store: Ext.data.StoreManager.lookup('metrostopsStore'),
             multiColumnSort: true,
+            plugins: 'gridfilters',
             columns: [
-                { text: 'City', dataIndex: 'city', flex: 1 },
-                { text: 'Name', dataIndex: 'name', flex: 2 }
+                { text: 'City', dataIndex: 'city', flex: 1, filter: 'number' },
+                {
+                    text: 'Name',
+                    dataIndex: 'name',
+                    flex: 2, 
+                    filter: {
+                        type: 'string',
+                        itemDefaults: {
+                            emptyText: 'Search for...'
+                        }
+                    } 
+                }
             ],
 
             bbar: [{

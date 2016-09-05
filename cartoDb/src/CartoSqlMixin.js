@@ -20,16 +20,36 @@ Ext.define('CartoDb.CartoSqlMixin', {
 
         var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' WHERE 1 = 1 ';
         sql += this.whereClauseBuilder2_0(params);
+        sql += this.getFilter(params);
         sql += this.getBounds(params);
-        sql += this.getOrderBy(params);
+        sql += this.getOrder(params);
         sql += this.getPaging(params);
-debugger
+console.log(sql);
         return sql;
     },
 
-    getBounds: function(parmas) {
+    getFilter: function(params) {
         var str = '';
-        if(params.mapLock && params.bounds){
+        var tmpAr = Ext.JSON.decode(params.filter);
+        if (tmpAr && tmpAr.length > 0) {
+            tmpAr.forEach(function(rec) {
+                if (rec.property && rec.operator && rec.value) {
+                    switch(rec.operator) {
+                        case 'like':
+                            str += ' AND ' + rec.property + ' ' + rec.operator + " '" + rec.value + "%' ";
+                        case '=':
+                            return '1'
+                    }
+                }
+                return '';
+            });
+        }
+        return str;
+    },
+
+    getBounds: function(params) {
+        var str = '';
+        if (params.enableBounds && params.bounds){
             str = 'AND (the_geom && ST_MakeEnvelope(' + params.bounds._northEast.lng + ',' + 
                                                          params.bounds._northEast.lat + ',' + 
                                                          params.bounds._southWest.lng + ',' + 
@@ -38,14 +58,22 @@ debugger
         return str;
     },
 
-    getOrderBy: function(params) {
-        debugger;
+    getOrder: function(params) {
+        var str = '';
+        var tmpAr = Ext.JSON.decode(params.sort);
+        if (tmpAr.length > 0) {
+            str += ' ORDER BY';
+            str += tmpAr.map(function(rec) {
+                return ' ' + rec.property + ' ' + rec.direction;
+            }).join(',');
+        }
+        return str;
     },
 
     getPaging: function( params ) {
         var str = '';
         if (params.limit) {
-            str += 'LIMIT ' + params.limit
+            str += ' LIMIT ' + params.limit
         }
         if (params.start) {
             str += ' OFFSET ' + params.start
@@ -67,12 +95,7 @@ debugger
         }else if(params.start){
             sql += " AND end_date >= '" + params.start + "' ";
         }
-        // if(params.start){
-        //     sql += " AND start_date <= '" + params.end + "' ";
-        // }
-        // if(params.end){
-        //     sql += " AND end_date <= '" + params.end + "' ";
-        // }
+
         if(params.type && params.type.length > 0){
             sql += "AND (";
             var typesArray = [];
@@ -91,12 +114,7 @@ debugger
             sql += regionArray.join(' OR ');
             sql += ")";
         }
-        if(params.mapLock && params.bounds){
-            sql += 'AND (the_geom && ST_MakeEnvelope(' + params.bounds._northEast.lng + ',' + 
-                                                         params.bounds._northEast.lat + ',' + 
-                                                         params.bounds._southWest.lng + ',' + 
-                                                         params.bounds._southWest.lat + ', 4326)) ';
-        }
+
         if(noNull && noNull.length > 0 ){
             sql += "AND (";
             var noNullArray = [];
@@ -105,12 +123,6 @@ debugger
             });
             sql += noNullArray.join(' AND ');
             sql += ")";
-        }
-        if(groupBy && typeof groupBy === 'string'){
-            sql += " Group By " + groupBy;
-        }
-        if(orderBy && typeof orderBy === 'object'){
-            sql += ' Order By ' + orderBy.field + " " + orderBy.dir;
         }
         return sql;
     },
