@@ -13,7 +13,6 @@ Ext.define('CartoDb.CartoSqlMixin', {
      * @param  {} table
      */
     sqlBuilder2_0: function (params) {
-        debugger;
         var fields = '*';
         if (Ext.isArray(params.select)) {
             fields = params.select.join(',');
@@ -21,9 +20,39 @@ Ext.define('CartoDb.CartoSqlMixin', {
 
         var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' WHERE 1 = 1 ';
         sql += this.whereClauseBuilder2_0(params);
+        sql += this.getBounds(params);
+        sql += this.getOrderBy(params);
+        sql += this.getPaging(params);
+debugger
         return sql;
     },
-    
+
+    getBounds: function(parmas) {
+        var str = '';
+        if(params.mapLock && params.bounds){
+            str = 'AND (the_geom && ST_MakeEnvelope(' + params.bounds._northEast.lng + ',' + 
+                                                         params.bounds._northEast.lat + ',' + 
+                                                         params.bounds._southWest.lng + ',' + 
+                                                         params.bounds._southWest.lat + ', 4326)) ';
+        }
+        return str;
+    },
+
+    getOrderBy: function(params) {
+        debugger;
+    },
+
+    getPaging: function( params ) {
+        var str = '';
+        if (params.limit) {
+            str += 'LIMIT ' + params.limit
+        }
+        if (params.start) {
+            str += ' OFFSET ' + params.start
+        }
+        return str; 
+    },
+
     /**
      * @param  {} params
      * @param  {} noNull

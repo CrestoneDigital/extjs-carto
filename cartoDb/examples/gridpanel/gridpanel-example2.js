@@ -10,10 +10,6 @@ Ext.onReady(function () {
 
     Ext.create('Ext.data.Store', {
         storeId: 'metrostopsStore',
-         sorters: [{
-            property: 'cartodb_id',
-            direction: 'DESC'
-        }, 'name'],
         proxy: {
             type: 'carto',
             username: 'crestonedigital',
@@ -28,24 +24,15 @@ Ext.onReady(function () {
             xtype: 'grid',
             title: 'United States - Metro Stops',
             store: Ext.data.StoreManager.lookup('metrostopsStore'),
-            multiColumnSort: true,
             columns: [
                 { text: 'City', dataIndex: 'city', flex: 1 },
                 { text: 'Name', dataIndex: 'name', flex: 2 }
             ],
 
-            bbar: [{
-                xtype: 'pagingtoolbar',
-                store: Ext.data.StoreManager.lookup('metrostopsStore'),
-                displayInfo: true
-            }],
-
             /* Generic footer for reviewing example */
             dockedItems: [{
                 xtype: 'toolbar',
                 dock: 'bottom',
-                ui: 'dark',
-                padding: 10,
                 items: [{
                     text: 'View Code'
                 }]
