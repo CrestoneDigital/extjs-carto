@@ -61,7 +61,7 @@ console.log(sql);
     getOrder: function(params) {
         var str = '';
         var tmpAr = Ext.JSON.decode(params.sort);
-        if (tmpAr.length > 0) {
+        if (tmpAr && tmpAr.length > 0) {
             str += ' ORDER BY';
             str += tmpAr.map(function(rec) {
                 return ' ' + rec.property + ' ' + rec.direction;

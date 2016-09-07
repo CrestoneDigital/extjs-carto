@@ -5,9 +5,10 @@ Ext.define('CartoDb.CartoMap', {
     extend: 'Ext.Component',
     xtype: 'cartoMap',
     mixins: [
-        'CartoDb.CountryCodesMixin',
         'CartoDb.LeafletFunctionsMixin',
-        'CartoDb.CartoProxy'    
+        'CartoDb.CartoProxy',
+        'CartoDb.CountryCodesLatLongISO3166',
+        'CartoDb.CartoStore'    
     ],
     config: {
 		map: null,
@@ -18,7 +19,9 @@ Ext.define('CartoDb.CartoMap', {
         bounds: null,
         zoom: null,
         minZoom: 3,
-        maxZoom: 18
+        maxZoom: 18,
+        layerItems: [],
+        layers: []
 	},
     
     renderConfig: {
@@ -85,9 +88,7 @@ Ext.define('CartoDb.CartoMap', {
 	 * @param  {} eOpts
 	 */
 	afterRender: function(t, eOpts){
-
-        var mapCenter = (typeof this.getCenter() === 'string') ? this.mixins['CartoDb.CountryCodesMixin'][this.getCenter()] : (Array.isArray(this.getCenter())) ? this.getCenter() : [0,0];
-    
+        var mapCenter = (typeof this.getCenter() === 'string') ? this.mixins['CartoDb.CountryCodesLatLongISO3166'].codes[this.getCenter()] : (Array.isArray(this.getCenter())) ? this.getCenter() : [0,0];
         this.setMap(L.map(this.getId(), {
             scrollWheelZoom: this.getScrollWheelZoom(),
             center:          mapCenter,
@@ -103,6 +104,18 @@ Ext.define('CartoDb.CartoMap', {
         this.getMap().addEventListener('moveend', this.publishMapBounds, this);
         this.getMap().addEventListener('zoomend', this.publishMapBounds, this);
         this.fireEvent('mapLoaded');
+        var initalLayers = this.getLayerItems();
+        if(initalLayers.length > 0){
+            initalLayers.forEach(function(item, index){
+                this.addLayer(item, function(err, layer){
+                    if(err){
+                        console.log('err');
+                    }else{
+                        console.log('success');
+                    }
+                });
+            }.bind(this));
+        }
     },
 	/**
 	 * @param  {} w
@@ -121,82 +134,88 @@ Ext.define('CartoDb.CartoMap', {
     },
 
     addLayer: function(data, callback) {
-        // layerDetails.map = this.getMap();
-        // layerDetails.user_name = (data.layerDetails.user_name) ? data.layerDetails.user_name : this.getUserName();
-        // this.createLayer(data.layerDetails, function(err, layer){
-        //     if(err){
-        //         console.log(err);
-        //         callback("Error Creating Layer: " + err);
-        //     }else{
-        //         // if(data.enableStore){
-        //             this.createDataStore({data: data, layer: layer});
-        //         // }else{
-        //         //     callback(null, layer);
-        //         // }
-        //     }
-        // }.bind(this));
-
         var dataStores = this.createDataStores(data);
         this.createLayers(data.username, dataStores, function(err, layer){
             if(err) {
                 console.log('Error: ' + err);
             }else{
-                return layer;
+                return callback(null, layer);
             }
         });
     },
 
-    createDataStore: function(data) {
+    createLayers: function(username, dataStores, cb){
+        var sublayers = [];
+        dataStores.forEach(function(item, index){
+            var sublayer = {sql: item.getCartoSql(), cartocss: item.getCartoCSS()};
+            sublayers.push(sublayer);
+        }.bind(this));
+        // if(layerData.subLayers && layerData.subLayers.length > 0){
+        //     layerData.subLayers.forEach(function(item){
+        //         sublayers.push({sql: this.mixins['CartoDb.CartoSqlMixin'].sqlBuilder(item.sqlData), cartocss: item.cartocss});
+        //     }.bind(this));
+        // }else{
+        //     sublayers.push({sql: this.mixins['CartoDb.CartoSqlMixin'].sqlBuilder(layerData.layerSql), cartocss: layerData.layerCartocss});
+        // }  
+        cartodb.createLayer(this.getMap(), {
+            user_name: username,
+            type: 'cartodb',
+            sublayers: sublayers
+        })
+        .addTo(this.getMap())
+        .done(function (layer) {
+            this.getLayers().push(layer);
+            for(var i = 0; layer.getSubLayerCount() > i; i++){
+                layer.getSubLayers(i).store = dataStores[i];
+                dataStores[i]._subLayer = layer.getSubLayers(i);
+            }
+            cb(null, layer);
+
+            // var self =  this.layer[0]
+
+            // layer.getSubLyers.forEach(function( rec, idx ) {
+            //   self.layer.subLayers[idx]._sublayer = rec;
+            // });
+            
+            // sublayer.setInteraction(true);
+            // sublayer.set({
+            //     //TODO 1: checking what interactivity is set to shows these fields are correctly set. For whatever reason, the date fields are not returned. ???
+            //     interactivity: "cartodb_id, project__1, start_date, end_date, project_st"
+            // });
+            
+            // me.cursorChange(sublayer); // this never worked
+
+            // sublayer.on('featureClick', function(e, pos, latlng, data, subLayerIndex) {
+            //     //TODO 2: click on a construction project ... data is returning without start and end dates !!!!!
+
+            //     // me.getCrashData(data.start_date, data.end_date);  // TODO 3: this can be called once the dates are there ????
+            // });
+        }.bind(this))
+        .error(function(error) {
+            cb(error);
+        }.bind(this));
+
+    },
+
+    createDataStores: function(data) {
         var storesArray = [];
         data.subLayers.forEach(function(item, index){
             var storeId = (item.storeId) ? item.storeId : new Date().getTime();
-            var username = (data.accountName) ? data.accountName : this.getUserName();
+            var username = (data.username) ? data.username : this.getUsername();
             storesArray.push(
-                Ext.create("Ext.data.Store",{
+                Ext.create("CartoDb.CartoStore",{
                     storeId: storeId,
                     tableName: item.tableName,
-                    _sublayer: null
+                    _sublayer: null,
+                    proxy: {
+                        type: 'carto',
+                        username: username,
+                        table: item.table
+                    }
                 })
             );
         }.bind(this));
 
         return storesArray;
-
-        // if(data.data.layerDetails.sublayers && data.data.layerDetails.sublayers.length > 0){
-        //     for(var i = 0; data.data.layerDetails.sublayers.length > i; i++){
-        //         if(data.data.layerDetails.sublayers[i].enableStore){
-        //             var storeId = (data.data.layerDetails.sublayers[i].reference) ? 
-        //                             data.data.layerDetails.sublayers[i].reference : new Date().getTime();
-        //             var username = (data.data.layerDetails.sublayers[i].username) ? 
-        //                             data.data.layerDetails.sublayers[i].username : this.getUserName();
-        //             var store = Ext.create('Ext.data.Store', {
-        //                 storeId: storeId,
-        //                 proxy: {
-        //                     type: 'carto',
-        //                     username: username,
-        //                     sql: data.data.layerDetails.sublayers[i].sql
-        //                 }
-        //             });
-        //             data.layers.getSubLayer(i).store = store;
-        //             if(data.data.layerDetails.sublayers[i].autoLoad) store.load();
-        //         }
-        //     }
-        //     cb(null, dataStores);
-        // }else{
-        //      if(data.data.enableStore){
-        //         var storeId = (data.data.reference) ? data.data.reference : new Date().getTime();
-        //         var username = (data.data.username) ? data.data.username : this.getUserName();
-        //         var store = Ext.create('Ext.data.Store',{
-        //             storeId: storeId,
-        //             proxy: {
-        //                 type: 'carto',
-        //                 username: username,
-        //                 sql: data.data.sql
-        //             }
-        //         });
-        //         if(item.autoLoad) store.load();
-        //         data.layers.getSubLayer(0).store = store;
-        //     }
-        // }
     }
 });

@@ -55,7 +55,7 @@ Ext.define('CartoDb.CartoProxy', {
                 table: this.config.table,
                 enableBounds: this.enableBounds
             }, me.getParams(operation) )) 
-        }
+        };
 
         // Set up the entity id parameter according to the configured name.
         // This defaults to "id". But TreeStore has a "nodeParam" configuration which
