@@ -17,17 +17,14 @@ Ext.onReady(function () {
         items: [{
             xtype: "cartoMap",
             center: 'us',
-            layerItems: [
-                {
+            layerItems: [{
                   username: 'crestonedigital',
                   subLayers: [{
                       storeId: 'layer1',
                       table: 'petroleum_refineries'
                   }]
 
-                }
-            ]
-
+                }]
         }]
     });
 

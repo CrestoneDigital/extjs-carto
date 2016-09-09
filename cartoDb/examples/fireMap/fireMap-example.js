@@ -15,7 +15,7 @@ var dataStore = Ext.create('Ext.data.Store',{
             username: 'crestonedigital',
                   subLayers: [{
                       storeId: 'layer1',
-                      table: 'petroleum_refineries'
+                      table: 'wildfire'
                   }]
         }
     }]
@@ -52,7 +52,8 @@ Ext.onReady(function () {
             items: [{
                 xtype: "cartoMap",
                 center: 'us',
-                reference: 'map'
+                reference: 'map',
+                baseLayerName: 'Dark Matter (lite)'
             }],
             tbar: [{
                 xtype: 'combobox',
