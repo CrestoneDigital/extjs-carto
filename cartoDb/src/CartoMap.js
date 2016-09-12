@@ -23,7 +23,8 @@ Ext.define('CartoDb.CartoMap', {
         minZoom: 3,
         maxZoom: 18,
         layerItems: [],
-        layers: []
+        layers: [],
+        selection: null
 	},
     
     renderConfig: {
@@ -35,6 +36,10 @@ Ext.define('CartoDb.CartoMap', {
         'baseLayer',
         'center',
         'zoom'
+    ],
+
+    twoWayBindable: [
+        'selection'
     ],
     
     /**
@@ -65,6 +70,16 @@ Ext.define('CartoDb.CartoMap', {
             this.getMap().removeLayer(baseLayer);
         }
         return baseLayer;
+    },
+
+    applySelection: function(record) {
+        if (record) {
+            return record;
+        }
+    },
+
+    updateSelection: function(record) {
+        // this.getMap().panTo([record.getData().lat, record.getData().lng]);
     },
     
     // /**
@@ -196,8 +211,16 @@ Ext.define('CartoDb.CartoMap', {
         .done(function (layer) {
             this.getLayers().push(layer);
             for(var i = 0; layer.getSubLayerCount() > i; i++){
-                layer.getSubLayers(i).store = dataStores[i];
+                layer.getSubLayer(i).store = dataStores[i];
                 dataStores[i]._subLayer = layer.getSubLayers(i);
+                if(dataStores[i].interactivity){
+                    var sublayer = layer.getSubLayer(i);
+                    sublayer.setInteraction(dataStores[i].interactivity.enable);
+                    sublayer.set({
+                        interactivity: dataStores[i].interactivity.fields.join(',')
+                    });
+                    sublayer.on('featureClick', this.featureClick);
+                }
             }
             cb(null, layer);
         }.bind(this))
@@ -212,8 +235,7 @@ Ext.define('CartoDb.CartoMap', {
         data.subLayers.forEach(function(item, index){
             var storeId = (item.storeId) ? item.storeId : new Date().getTime();
             var username = (data.username) ? data.username : this.getUsername();
-            storesArray.push(
-                Ext.create("CartoDb.CartoStore",{
+            var store = Ext.create("CartoDb.CartoStore",{
                     storeId: storeId,
                     tableName: item.tableName,
                     _sublayer: null,
@@ -222,10 +244,16 @@ Ext.define('CartoDb.CartoMap', {
                         username: username,
                         table: item.table
                     }
-                })
-            );
+                });
+            if(item.autoLoad) store.load();
+            if(item.interactivity) store.interactivity = item.interactivity;
+            storesArray.push(store);
         }.bind(this));
-
         return storesArray;
+    },
+
+    featureClick: function(data, data2, data3, data4){
+        debugger
     }
+
 });
