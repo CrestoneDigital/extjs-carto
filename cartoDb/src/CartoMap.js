@@ -256,6 +256,7 @@ Ext.define('CartoDb.CartoMap', {
         var dataModel = Ext.create('CartoDb.CartoDataModel', data4);
         dataModel.internalId = dataModel.id;
         debugger
+        dataModel.phantom = false;
         this.setSelection(dataModel);
     }
 
