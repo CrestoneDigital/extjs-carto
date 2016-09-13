@@ -3,10 +3,10 @@ Ext.define('CartoDb.CartoMap', {
         'CartoDb.CartoSqlMixin'
     ],
 
-    createLayer: function(username, dataStores, cb){
+    createLayer: function(username, dataStores, options, cb){
         var sublayers = [];
         dataStores.forEach(function(item, index){
-            var sublayer = {sql: item.getCartoSql(), cartocss: item.getCartoCSS()};
+            var sublayer = {sql: item.getCartoSql(), cartocss: item.getCartoCSS(options.mapStyle)};
             sublayers.push(sublayer);
         }.bind(this));
         // if(layerData.subLayers && layerData.subLayers.length > 0){

@@ -9,8 +9,8 @@ Ext.require([
 
 var dataStore = Ext.create('Ext.data.Store',{
     data: [{
-        name: 'Petroleum Refineries',
-        value: 'petroleum_refineries',
+        name: 'Fire Map',
+        value: 'fire_map',
         mapLayer: {
             username: 'crestonedigital',
                   subLayers: [{

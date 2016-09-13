@@ -166,7 +166,7 @@ Ext.define('CartoDb.CartoMap', {
 
     addLayer: function(data, callback) {
         var dataStores = this.createDataStores(data);
-        this.createLayers(data.username, dataStores, function(err, layer){
+        this.createLayers(data.username, dataStores, {mapStyle: {type: data.mapStyle} },function(err, layer){
             if(err) {
                 console.log('Error: ' + err);
             }else{
@@ -181,10 +181,10 @@ Ext.define('CartoDb.CartoMap', {
         this.getLayers().splice(index,1);
     },
 
-    createLayers: function(username, dataStores, cb){
+    createLayers: function(username, dataStores, options, cb){
         var sublayers = [];
         dataStores.forEach(function(item, index){
-            var sublayer = {sql: item.getCartoSql(), cartocss: item.getCartoCSS()};
+            var sublayer = {sql: item.getCartoSql(), cartocss: item.getCartoCSS(options.mapStyle)};
             sublayers.push(sublayer);
         }.bind(this)); 
         cartodb.createLayer(this.getMap(), {
