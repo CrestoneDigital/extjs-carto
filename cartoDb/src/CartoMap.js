@@ -219,7 +219,7 @@ Ext.define('CartoDb.CartoMap', {
                     sublayer.set({
                         interactivity: dataStores[i].interactivity.fields.join(',')
                     });
-                    sublayer.on('featureClick', this.featureClick);
+                    sublayer.on('featureClick', this.featureClick.bind(this));
                 }
             }
             cb(null, layer);
@@ -253,7 +253,10 @@ Ext.define('CartoDb.CartoMap', {
     },
 
     featureClick: function(data, data2, data3, data4){
+        var dataModel = Ext.create('CartoDb.CartoDataModel', data4);
+        dataModel.internalId = dataModel.id;
         debugger
+        this.setSelection(dataModel);
     }
 
 });

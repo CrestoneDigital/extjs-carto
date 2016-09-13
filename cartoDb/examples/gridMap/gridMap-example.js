@@ -50,7 +50,7 @@ Ext.onReady(function () {
                       interactivity: {
                           enable: true,
                           fields: [
-                              'site_name', 'company', 'state', 'total_oper'
+                              'site_name', 'company', 'state', 'total_oper', 'cartodb_id'
                           ]
                       }
                   }]
@@ -61,6 +61,7 @@ Ext.onReady(function () {
                 region: 'south',
                 reference: 'southGrid',
                 split: true,
+                idProperty: 'cartodb_id',
                 bind: {
                     selection: '{selectedValue}'
                 },

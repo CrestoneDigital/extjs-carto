@@ -4,6 +4,10 @@ Ext.define('CartoDb.CartoStore',{
     mixins: [
         'CartoDb.CartoSqlMixin'
     ],
+    requires: [
+        'CartoDb.CartoDataModel'
+    ],
+    model: 'CartoDb.CartoDataModel',
     // proxy: {
     //         type: 'carto',
     //         username: 'crestonedigital',
