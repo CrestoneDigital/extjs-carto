@@ -24,7 +24,7 @@ Ext.onReady(function () {
                       table: 'petroleum_refineries'
                   }]
 
-                }]
+            }]
         }]
     });
 
