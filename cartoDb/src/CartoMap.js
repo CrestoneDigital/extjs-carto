@@ -255,7 +255,7 @@ Ext.define('CartoDb.CartoMap', {
     featureClick: function(data, data2, data3, data4){
         var dataModel = Ext.create('CartoDb.CartoDataModel', data4);
         dataModel.internalId = dataModel.id;
-        debugger
+        // debugger
         this.setSelection(dataModel);
     }
 
