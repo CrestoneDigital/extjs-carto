@@ -16,13 +16,12 @@ var mapController = Ext.create('Ext.app.ViewController',{
 
 
 var mapViewModel = Ext.create('Ext.app.ViewModel',{
-
+    data: {
+        lockToMap: true
+    }
 });
 
-/**
- *  
- * Basic map w/toolbar Centered on US. 
- */
+
 Ext.onReady(function () {
     Ext.QuickTips.init();
 
@@ -33,24 +32,34 @@ Ext.onReady(function () {
             layout: 'border',
             viewModel: mapViewModel,
             controller: mapController,
+            tbar: {
+                items: {
+                    xtype: 'checkboxfield',
+                    reference: 'lockToMapBox',
+                    boxLabel: 'Lock to Map',
+                    bind: {
+                        value: '{lockToMap}'
+                    }
+                }
+            },
             items: [{
                 xtype: "cartoMap",
                 region: 'center',
                 center: 'us',
                 reference: 'map',
                 bind: {
-                    selection: '{selectedValue}'
+                    selection: '{selectedValue}',
+                    mapLock: '{lockToMap}'
                 },
+                storesToLock: ['layer1'],
+                // selectedAction: 'panTo',
                 baseLayerName: 'Dark Matter (lite)',
                 layerItems: [{
                   username: 'crestonedigital',
                   subLayers: [{
                       storeId: 'layer1',
-                    //   enableLatLng: true,
+                      enableLatLng: true,
                       table: 'petroleum_refineries',
-                      style: {
-                          type: 'intensity'
-                      },
                       autoLoad: true,
                       interactivity: {
                           enable: true,

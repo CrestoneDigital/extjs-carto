@@ -9,9 +9,7 @@ Ext.require([
 
 
 var mapController = Ext.create('Ext.app.ViewController',{
-    onSelect: function(rowmodel, record) {
-        this.lookup('southGrid').ensureVisible(record);
-    }
+    
 });
 
 
@@ -19,10 +17,7 @@ var mapViewModel = Ext.create('Ext.app.ViewModel',{
 
 });
 
-/**
- *  
- * Basic map w/toolbar Centered on US. 
- */
+
 Ext.onReady(function () {
     Ext.QuickTips.init();
 
@@ -41,25 +36,21 @@ Ext.onReady(function () {
                 bind: {
                     selection: '{selectedValue}'
                 },
+                selectedAction: ['panTo','placeMarker'],
                 baseLayerName: 'Dark Matter (lite)',
                 layerItems: [{
                   username: 'crestonedigital',
+                  hidden: true,
                   subLayers: [{
                       storeId: 'layer1',
-                    //   enableLatLng: true,
+                      enableLatLng: true,
                       table: 'petroleum_refineries',
-                      style: {
-                          type: 'intensity'
-                      },
                       autoLoad: true,
                       interactivity: {
                           enable: true,
                           fields: [
                               'site_name', 'company', 'state', 'total_oper', 'cartodb_id'
-                          ],
-                          tooltip: {
-                              enable: true
-                          }
+                          ]
                       }
                   }]
 
@@ -76,8 +67,7 @@ Ext.onReady(function () {
                 listeners: {
                     afterrender: function(){
                         this.setStore(Ext.getStore('layer1'));
-                    },
-                    select: 'onSelect'
+                    }
                 },
                 height: 350,
                 columns: [{
@@ -97,6 +87,24 @@ Ext.onReady(function () {
                     dataIndex: 'total_oper',
                     flex: 1
                 }]
+            }, {
+                xtype: 'container',
+                reference: 'detailsPanel',
+                padding: 10,
+                width: '15%',
+                region: 'east',
+                split: true,
+                tpl: ['<h3>Site Name</h3>',
+                     '<p>{site_name}</p>',
+                     '<h3>Company</h3>',
+                     '<p>{company}</p>',
+                     '<h3>State</h3>',
+                     '<p>{state}</p>',
+                     '<h3>Number of Operations</h3>',
+                     '<p>{total_oper}</p>'],
+                bind: {
+                    data: '{selectedValue}'
+                }
             }]
         }]
     });

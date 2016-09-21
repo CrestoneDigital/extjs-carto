@@ -12,19 +12,27 @@ Ext.define('CartoDb.CartoSqlMixin', {
      /**
      * @param  {} table
      */
-    sqlBuilder2_0: function (params) {
+    sqlBuilder2_0: function (params, options) {
         var fields = '*';
         if (Ext.isArray(params.select)) {
             fields = params.select.join(',');
         }
+        if (params.enableLatLng) {
+            fields += ',ST_Y(the_geom) AS lat,ST_X(the_geom) AS lng';
+        }
+        if (options && options.extraSelect) {
+            fields += ',' + options.extraSelect.join(',');
+        }
 
-        var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' WHERE 1 = 1 ';
-        sql += this.whereClauseBuilder2_0(params);
-        sql += this.getFilter(params);
-        sql += this.getBounds(params);
-        sql += this.getOrder(params);
-        sql += this.getPaging(params);
-console.log(sql);
+        // var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' WHERE 1 = 1 ';
+        // sql += this.whereClauseBuilder2_0(params);
+        // sql += this.getFilter(params);
+        // sql += this.getBounds(params);
+        // sql += this.getOrder(params);
+        // sql += this.getPaging(params);
+        var sql = 'SELECT ' + fields + ' FROM ' + params.table;
+        sql += this.whereClauseBuilder3_0(params.where);
+        // console.log(sql);
         return sql;
     },
 
@@ -173,7 +181,7 @@ console.log(sql);
             whereClause += ")";
         }
         if(params.groupBy) {
-            if(this.verifyGroupBY()){
+            if(this.verifyGroupBy()){
                 whereClause += ' GROUP BY ' + params.groupBy[0] + " ";
             }
         }
@@ -185,9 +193,64 @@ console.log(sql);
         return whereClause;
 
     },
+
+    whereClauseBuilder3_0: function(where, prefix) {
+        var wheres = this.whereClauseLoop(where, prefix);
+        if (wheres.length > 0) {
+            return ' WHERE ' + wheres.join(' AND ');
+        } else {
+            return '';
+        }
+    },
+    whereClauseLoop: function(params, prefix) {
+        var wheres = [],
+            pref = (prefix) ? prefix + '.' : '',
+            obj;
+        for (var check in params) {
+            if (!(obj = params[check])) continue;
+            if (['string','number'].indexOf(typeof obj) > -1) {
+                wheres.push(pref + check + " = " + this.wrap(obj));
+            } else if (obj instanceof Array && obj.length > 0) {
+                var temp = obj.slice();
+                for (var i = 0; i < temp.length; i++) temp[i] = this.wrap(temp[i]);
+                wheres.push("ARRAY[" + pref + check + "] <@ ARRAY[" + temp.join(",") + "]");
+            } else if (obj.type) {
+                this.whereByType(wheres, check, obj, pref);
+            }
+        }
+        return wheres;
+    },
+    whereByType: function(wheres, check, obj, pref) {
+        switch (obj.type) {
+            case 'static':
+            if (obj.text) {
+                wheres.push(obj.text);
+            }
+            break;
+            case 'range':
+            if (obj.start) {
+                wheres.push(pref + check + ' >= ' + this.wrap(obj.start));
+            }
+            if (obj.end) {
+                wheres.push(pref + check + ' <= ' + this.wrap(obj.end));
+            }
+            break;
+            case 'bounds':
+            if (obj.bounds) {
+                wheres.push('(' + pref + 'the_geom && ST_MakeEnvelope(' +
+                    obj.bounds._northEast.lng + ',' + 
+                    obj.bounds._northEast.lat + ',' + 
+                    obj.bounds._southWest.lng + ',' + 
+                    obj.bounds._southWest.lat + ',4326))');
+            }
+            break;
+        }
+    },
+    wrap: function(obj) {
+        return (typeof obj === 'string') ? "'" + obj + "'" : obj;
+    },
     
-    
-    verifyGroupBY: function(){
+    verifyGroupBy: function(){
         return true;
     },
 
