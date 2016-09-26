@@ -19,7 +19,7 @@ Ext.onReady(function () {
         layout: 'fit',
         items: [{
             xtype: "cartoMap",
-            center: 'ru'
+            center: 'jp'
         }]
     });
 

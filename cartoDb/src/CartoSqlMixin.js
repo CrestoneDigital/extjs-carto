@@ -12,33 +12,72 @@ Ext.define('CartoDb.CartoSqlMixin', {
      /**
      * @param  {} table
      */
-    sqlBuilder2_0: function (params) {
+    sqlBuilder2_0: function (params, options) {
         var fields = '*';
         if (Ext.isArray(params.select)) {
             fields = params.select.join(',');
         }
+        if (params.enableLatLng) {
+            fields += ',ST_Y(the_geom) AS lat,ST_X(the_geom) AS lng';
+        }
+        if (options && options.extraSelect) {
+            fields += ',' + options.extraSelect.join(',');
+        }
 
-        var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' WHERE 1 = 1 ';
-        sql += this.whereClauseBuilder2_0(params);
+        // var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' WHERE 1 = 1 ';
+        // sql += this.whereClauseBuilder2_0(params);
+        // sql += this.getFilter(params);
+        // sql += this.getBounds(params);
+        // sql += this.getOrder(params);
+        // sql += this.getPaging(params);
+        var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' Where 1=1 ';
+        sql += this.whereClauseBuilder3_0(params.where);
         sql += this.getFilter(params);
-        sql += this.getBounds(params);
+        // sql += this.getBounds(params);
         sql += this.getOrder(params);
         sql += this.getPaging(params);
-console.log(sql);
+        // console.log(sql);
         return sql;
     },
 
     getFilter: function(params) {
         var str = '';
-        var tmpAr = Ext.JSON.decode(params.filter);
+        var tmpAr = (typeof params.filter === 'string') ? Ext.JSON.decode(params.filter) : params.filter;
         if (tmpAr && tmpAr.length > 0) {
             tmpAr.forEach(function(rec) {
-                if (rec.property && rec.operator && rec.value) {
-                    switch(rec.operator) {
+                if (rec.property && rec.value) {
+                    var operator = (rec.operator) ? rec.operator : '=';
+                    debugger
+                    switch(operator) {
                         case 'like':
-                            str += ' AND ' + rec.property + ' ' + rec.operator + " '" + rec.value + "%' ";
+                            str += ' AND ' + rec.property + ' ' + operator + " '" + rec.value + "%' ";
+                            break;
                         case '=':
-                            return '1'
+                            str += ' AND ' + rec.property + ' ' + operator + " '" + rec.value + "' ";
+                            break;
+                        case 'lt':
+                            if(typeof rec.value === 'string'){
+                                str += ' AND ' + rec.property + '::date  ' + " < '" + rec.value + "'";
+                            }else{
+                                str += ' AND ' + rec.property + ' ' + " < " + rec.value;
+                            }       
+                            break;
+                        case 'gt':
+                            if(typeof rec.value === 'string'){
+                                str += ' AND ' + rec.property + '::date  ' + " > '"  + rec.value + "'::date";
+                            }else{
+                                str += ' AND ' + rec.property + ' ' + " > "  + rec.value;
+                            }
+                            break;
+                        case 'eq':
+                            if(typeof rec.value === 'string'){
+                                str += ' AND ' + rec.property + '::date  ' + " = '"  + rec.value + "'::date";
+                            }else{
+                                str += ' AND ' + rec.property + ' ' + " = "  + rec.value;
+                            }
+                            
+                            break;
+                            // return '1'
                     }
                 }
                 return '';
@@ -81,113 +120,65 @@ console.log(sql);
         return str; 
     },
 
-    /**
-     * @param  {} params
-     * @param  {} noNull
-     * @param  {} groupBy
-     */
-    whereClauseBuilder: function (params, noNull, groupBy, orderBy) {
-        var sql = '';
-        if(params.start && params.end){
-            sql += " AND start_date <= '" + params.end + "' AND end_date >= '" + params.start + "' ";
-        }else if(params.end){
-            sql += " AND start_date <= '" + params.end + "' ";
-        }else if(params.start){
-            sql += " AND end_date >= '" + params.start + "' ";
+    whereClauseBuilder3_0: function(where, prefix) {
+        var wheres = this.whereClauseLoop(where, prefix);
+        if (wheres.length > 0) {
+            return ' AND ' + wheres.join(' AND ');
+        } else {
+            return '';
         }
-
-        if(params.type && params.type.length > 0){
-            sql += "AND (";
-            var typesArray = [];
-            params.type.forEach(function(item) {
-                typesArray.push(" project__1 = '" + item + "' ");    
-            }, this);
-            sql += typesArray.join(' OR ');
-            sql += ")";
-        }
-        if(params.region && params.region.length > 0){
-            sql += "AND (";
-            var regionArray = [];
-            params.region.forEach(function (item) {
-                regionArray.push(" project_co = '" + item + "' ");    
-            });
-            sql += regionArray.join(' OR ');
-            sql += ")";
-        }
-
-        if(noNull && noNull.length > 0 ){
-            sql += "AND (";
-            var noNullArray = [];
-            noNull.forEach(function (item) {
-                noNullArray.push("'" + item + "' IS NOT NULL ");    
-            });
-            sql += noNullArray.join(' AND ');
-            sql += ")";
-        }
-        return sql;
     },
 
-
-    whereClauseBuilder2_0: function(params) {
-        var whereClause = '';
-        
-
-        if(params.start && params.end){
-            whereClause += " AND start_date <= '" + params.end + "' AND end_date >= '" + params.start + "' ";
-        }else if(params.end){
-            whereClause += " AND start_date <= '" + params.end + "' ";
-        }else if(params.start){
-            whereClause += " AND end_date >= '" + params.start + "' ";
-        }
-        if(params.type && params.type.length > 0){
-            whereClause += "AND (";
-            var typesArray = [];
-            params.type.forEach(function(item) {
-                typesArray.push(" project__1 = '" + item + "' ");    
-            }, this);
-            whereClause += typesArray.join(' OR ');
-            whereClause += ")";
-        }
-        if(params.region && params.region.length > 0){
-            whereClause += "AND (";
-            var regionArray = [];
-            params.region.forEach(function (item) {
-                regionArray.push(" project_co = '" + item + "' ");    
-            });
-            whereClause += regionArray.join(' OR ');
-            whereClause += ")";
-        }
-        if(params.mapLock && params.bounds){
-            whereClause += 'AND (the_geom && ST_MakeEnvelope(' + params.bounds._northEast.lng + ',' + 
-                                                         params.bounds._northEast.lat + ',' + 
-                                                         params.bounds._southWest.lng + ',' + 
-                                                         params.bounds._southWest.lat + ', 4326)) ';
-        }
-        if(params.noNull && params.noNull.length > 0 ){
-            whereClause += "AND (";
-            var noNullArray = [];
-            noNull.forEach(function (item) {
-                noNullArray.push("'" + item + "' IS NOT NULL ");    
-            });
-            whereClause += noNullArray.join(' AND ');
-            whereClause += ")";
-        }
-        if(params.groupBy) {
-            if(this.verifyGroupBY()){
-                whereClause += ' GROUP BY ' + params.groupBy[0] + " ";
+    whereClauseLoop: function(params, prefix) {
+        var wheres = [],
+            pref = (prefix) ? prefix + '.' : '',
+            obj;
+        for (var check in params) {
+            if (!(obj = params[check])) continue;
+            if (['string','number'].indexOf(typeof obj) > -1) {
+                wheres.push(pref + check + " = " + this.wrap(obj));
+            } else if (obj instanceof Array && obj.length > 0) {
+                var temp = obj.slice();
+                for (var i = 0; i < temp.length; i++) temp[i] = this.wrap(temp[i]);
+                wheres.push("ARRAY[" + pref + check + "] <@ ARRAY[" + temp.join(",") + "]");
+            } else if (obj.type) {
+                this.whereByType(wheres, check, obj, pref);
             }
         }
-        if(params.orderBy) {
-            if(this.verifyOrderBy()){
-                whereClause += ' ORDER BY ' + params.orderBy.items[0] + " " + params.orderBy.direction;
-            }
-        }
-        return whereClause;
+        return wheres;
+    },
 
+    whereByType: function(wheres, check, obj, pref) {
+        switch (obj.type) {
+            case 'static':
+                if (obj.text) {
+                    wheres.push(obj.text);
+                }
+                break;
+            case 'range':
+                if (obj.start) {
+                    wheres.push(pref + check + ' >= ' + this.wrap(obj.start));
+                }
+                if (obj.end) {
+                    wheres.push(pref + check + ' <= ' + this.wrap(obj.end));
+                }
+                break;
+            case 'bounds':
+                if (obj.bounds) {
+                    wheres.push('(' + pref + 'the_geom && ST_MakeEnvelope(' +
+                        obj.bounds._northEast.lng + ',' + 
+                        obj.bounds._northEast.lat + ',' + 
+                        obj.bounds._southWest.lng + ',' + 
+                        obj.bounds._southWest.lat + ',4326))');
+                }
+                break;
+        }
+    },
+    wrap: function(obj) {
+        return (typeof obj === 'string') ? "'" + obj + "'" : obj;
     },
     
-    
-    verifyGroupBY: function(){
+    verifyGroupBy: function(){
         return true;
     },
 

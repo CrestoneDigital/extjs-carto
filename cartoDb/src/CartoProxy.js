@@ -16,11 +16,15 @@ Ext.define('CartoDb.CartoProxy', {
         url: "https://{{account}}.carto.com/api/v2/sql",
         table: '',
         select: '',
+        where: {},
         groupBy: '',
         orderBy: '',
         username: '',
+        mapLock: false,
         enableData: true,
-        enableBounds: false
+        enableBounds: false,
+        enableLatLng: false,
+        limit: null
     },
 
     /**
@@ -49,12 +53,8 @@ Ext.define('CartoDb.CartoProxy', {
     buildRequest: function(operation) {
         var me = this,
             request, operationId, idParam;
-
         var params = {
-            q: this.sqlBuilder2_0( Ext.apply({
-                table: this.config.table,
-                enableBounds: this.enableBounds
-            }, me.getParams(operation) )) 
+            q: this.sqlBuilder2_0( Ext.apply(me.getParams(operation), this.getCurrentConfig()) )
         };
 
         // Set up the entity id parameter according to the configured name.

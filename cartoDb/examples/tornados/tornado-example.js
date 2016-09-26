@@ -115,7 +115,7 @@ Ext.onReady(function () {
 //            html: 'This is CenterPanel',
             headerPosition: 'top',
             xtype: 'barChart',
-            title: 'Crashes by Day of Week',
+            // title: 'Crashes by Day of Week',
             flipXY: true,
 //            store: {
 //               type: 'roadData'
