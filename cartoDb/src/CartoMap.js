@@ -288,7 +288,7 @@ Ext.define('CartoDb.CartoMap', {
                     var sublayer = layer.getSubLayer(i);
                     sublayer.setInteraction(dataStores[i].interactivity.enable);
                     sublayer.set({
-                        interactivity: 'carto_store_id,' + dataStores[i].interactivity.fields.join(',')
+                        interactivity: 'carto_store_id,cartodb_id' + ((dataStores[i].interactivity.fields) ? ',' + dataStores[i].interactivity.fields.join(',') : '')
                     });
                     var tooltip = dataStores[i].interactivity.tooltip;
                     if(tooltip && tooltip.enable){

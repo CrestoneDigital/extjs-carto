@@ -49,13 +49,15 @@ Ext.onReady(function () {
                     //   enableLatLng: true,
                       table: 'petroleum_refineries',
                       style: {
-                          type: 'intensity'
+                          type: 'intensity',
+                        //   width: 15,
+                        //   fillOpacity: 0.5
                       },
                       autoLoad: true,
                       interactivity: {
                           enable: true,
                           fields: [
-                              'site_name', 'company', 'state', 'total_oper', 'cartodb_id'
+                              'site_name', 'company', 'state', 'total_oper'
                           ],
                           tooltip: {
                               enable: true

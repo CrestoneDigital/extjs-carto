@@ -49,7 +49,7 @@ Ext.onReady(function () {
                       interactivity: {
                           enable: true,
                           fields: [
-                              'site_name', 'company', 'state', 'total_oper', 'cartodb_id'
+                              'site_name', 'company', 'state', 'total_oper'
                           ]
                       }
                   }]

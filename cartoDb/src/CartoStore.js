@@ -27,6 +27,8 @@ Ext.define('CartoDb.CartoStore',{
         return this._sql;
     },
 
+
+
     getCartoCSS: function() {
         return this._css || this.createCartoCSS();
     },
@@ -43,6 +45,7 @@ Ext.define('CartoDb.CartoStore',{
                 css = ['Map {',
                 '-torque-frame-count:1;',
                 '-torque-animation-duration:10;',
+                '-torque-time-attribute:"dataperiod";',
                 '-torque-aggregation-function:"count(cartodb_id)";',
                 '-torque-resolution:8;',
                 '-torque-data-aggregation:linear;',
@@ -50,8 +53,16 @@ Ext.define('CartoDb.CartoStore',{
                 '#' + table + '{',
                 'image-filters: colorize-alpha(blue, cyan, lightgreen, yellow , orange, red);',
                 'marker-file: url(http://s3.amazonaws.com/com.cartodb.assets.static/alphamarker.png);',
-                'marker-fill-opacity: 0.8;',
+                'marker-fill-opacity: 0.4*[value];',
                 'marker-width: 35;',
+                '}',
+                '#' + table + '[frame-offset=1] {',
+                'marker-width:37;',
+                'marker-fill-opacity:0.2; ',
+                '}',
+                '#' + table + '[frame-offset=2] {',
+                'marker-width:39;',
+                'marker-fill-opacity:0.1; ',
                 '}'].join('');
                 break;
             // case 'wildfire':
@@ -91,30 +102,30 @@ Ext.define('CartoDb.CartoStore',{
             //     break;
             case 'intensity':
                 css = ['#' + table + '{',
-                'marker-fill: #FFCC00;',
-                'marker-width: 10;',
-                'marker-line-color: #FFF;',
-                'marker-line-width: 1;',
-                'marker-line-opacity: 1;',
-                'marker-fill-opacity: 0.9;',
-                'marker-comp-op: multiply;',
-                'marker-type: ellipse;',
-                'marker-placement: point;',
-                'marker-allow-overlap: true;',
-                'marker-clip: false;',
-                'marker-multi-policy: largest;',
+                    'marker-fill:' + (style.fill || '#FFCC00') + ';',
+                    'marker-width:' + (style.width || '10') + ';',
+                    'marker-line-color:' + (style.lineColor || '#FFF') + ';',
+                    'marker-line-width:' + (style.lineWidth || '1') + ';',
+                    'marker-line-opacity:' + (style.lineOpacity || '1') + ';',
+                    'marker-fill-opacity:' + (style.fillOpacity || '0.9') + ';',
+                    'marker-comp-op: multiply;',
+                    'marker-type: ellipse;',
+                    'marker-placement: point;',
+                    'marker-allow-overlap: true;',
+                    'marker-clip: false;',
+                    'marker-multi-policy: largest;',
                 '}'].join('');
                 break;
             default:
                 css = ["#" + table + "{",
-                    'marker-fill-opacity: 0.9;',
-                    'marker-line-color: #FFF;',
-                    'marker-line-width: 1.5;',
-                    'marker-line-opacity: 1;',
+                    'marker-line-color:' + (style.lineColor || '#FFF') + ';',
+                    'marker-line-width:' + (style.lineWidth || '1.5') + ';',
+                    'marker-line-opacity:' + (style.lineOpacity || '1') + ';',
+                    'marker-fill-opacity:' + (style.fillOpacity || '0.9') + ';',
                     'marker-placement: point;',
                     'marker-type: ellipse;',
-                    'marker-width: 10;',
-                    'marker-fill: #FF6600;',
+                    'marker-fill:' + (style.fill || '#FF6600') + ';',
+                    'marker-width:' + (style.width || '10') + ';',
                     'marker-allow-overlap: true;',
                 "}"].join(' ');
         }

@@ -32,7 +32,7 @@ Ext.define('CartoDb.CartoSqlMixin', {
         // sql += this.getPaging(params);
         var sql = 'SELECT ' + fields + ' FROM ' + params.table;
         sql += this.whereClauseBuilder3_0(params.where);
-        // console.log(sql);
+        console.log(sql);
         return sql;
     },
 
