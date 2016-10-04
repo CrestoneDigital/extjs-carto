@@ -283,7 +283,7 @@ Ext.define('CartoDb.CartoMap', {
             }
             for(var i = 0; layer.getSubLayerCount() > i; i++){
                 layer.getSubLayer(i).store = dataStores[i];
-                dataStores[i]._subLayer = layer.getSubLayers(i);
+                dataStores[i]._subLayer = layer.getSubLayer(i);
                 if(dataStores[i].interactivity){
                     var sublayer = layer.getSubLayer(i);
                     sublayer.setInteraction(dataStores[i].interactivity.enable);

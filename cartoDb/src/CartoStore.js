@@ -17,8 +17,12 @@ Ext.define('CartoDb.CartoStore',{
     //         username: 'crestonedigital',
     //         table: 'us_metro_stations'
     //     },
+    getSubLayer: function() {
+        return this._subLayer;
+    },
+
     getCartoSql: function(isMap) {
-        return this._sql || this.createCartoSql(isMap);
+        return this.createCartoSql(isMap);
     },
     createCartoSql: function(isMap) {
         this._sql = this.sqlBuilder2_0(this.getProxy().getCurrentConfig(), {
@@ -30,7 +34,7 @@ Ext.define('CartoDb.CartoStore',{
 
 
     getCartoCSS: function() {
-        return this._css || this.createCartoCSS();
+        return this.createCartoCSS();
     },
     createCartoCSS: function() {
         var css,
