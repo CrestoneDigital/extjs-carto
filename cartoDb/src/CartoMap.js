@@ -216,7 +216,7 @@ Ext.define('CartoDb.CartoMap', {
                                     bounds: this.getBounds()
                                 }
                             }
-                    )
+                    );
                     this.getStores()[i].load();
                 }
             }
@@ -249,7 +249,7 @@ Ext.define('CartoDb.CartoMap', {
 
     addLayer: function(data, callback) {
         this.setStores(this.createDataStores(data));
-        this.createLayers(data, function(err, layer){
+        this.createLayer(data, function(err, layer){
             if(err) {
                 console.log('Error: ' + err);
             }else{
@@ -264,7 +264,7 @@ Ext.define('CartoDb.CartoMap', {
         this.getLayers().splice(index,1);
     },
 
-    createLayers: function(data, cb){
+    createLayer: function(data, cb){
         var sublayers = [],
             dataStores = this.getStores();
         dataStores.forEach(function(item, index){
@@ -330,6 +330,8 @@ Ext.define('CartoDb.CartoMap', {
                         table: item.table
                     }
                 });
+            // if(item.transform) store.proxy.reader.transform = item.transform;
+            if(item.transform) store.proxy.reader.setConfig('transform', item.transform);
             if(item.autoLoad) store.load();
             if(item.interactivity) store.interactivity = item.interactivity;
             storesArray.push(store);
@@ -338,11 +340,11 @@ Ext.define('CartoDb.CartoMap', {
     },
 
     featureClick: function(e, latLng, point, record){
-        var record = this.getRecord(record.carto_store_id, record.cartodb_id);
+        var featureData = this.getRecord(record.carto_store_id, record.cartodb_id);
         // var dataModel = Ext.create('CartoDb.CartoDataModel', record);
         // dataModel.internalId = dataModel.id;
-        this.setSelection(record);
-        this.fireEvent('recordClicked', this, this.getMap(), record, latLng, point, e)
+        this.setSelection(featureData);
+        this.fireEvent('recordClicked', this, this.getMap(), featureData, latLng, point, e)
     },
 
     featureOver: function() {
@@ -359,7 +361,7 @@ Ext.define('CartoDb.CartoMap', {
     createDefaultTooltip: function(fields, mood) {
         var html = '<div class="cartodb-tooltip-content-wrapper ' + (mood || 'light') + '"><div class="cartodb-tooltip-content">';
         for(var i = 0; i < fields.length; i++){
-            html += '<h4>' + fields[i] + '</h4><p>{{' + fields[i] + '}}</p>'
+            html += '<h4>' + fields[i] + '</h4><p>{{' + fields[i] + '}}</p>';
         }
         return html + '</div></div>';
     },

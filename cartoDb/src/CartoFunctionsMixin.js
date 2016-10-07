@@ -27,7 +27,7 @@ Ext.define('CartoDb.CartoMap', {
             this.layers.push(layer);
             for(var i = 0; layer.getSubLayerCount() > i; i++){
                 layer.getSublayer(i).store = dataStores[i];
-                dataStores[i]._subLayer = layer.getSublayer(i);
+                dataStores[i]._sublayer = layer.getSublayer(i);
             }
             cd(null, layer);
 

@@ -7,9 +7,30 @@ Ext.define('CartoDb.CartoStore',{
     requires: [
         'CartoDb.CartoDataModel'
     ],
+    listeners: {
+        filterchange: function(store, filters) {
+            var storeConfig    = this.getProxy().getCurrentConfig();
+            storeConfig.filter = [];
+            filters.forEach(function(item){
+                storeConfig.filter.push({
+                        operator: (item._operator) ? item._operator : "like", 
+                        value: (item._convert) ? item._value.toLocaleDateString() :item._value, 
+                        property: item._property
+                    });
+            }.bind(this));
+            if(this._sublayer){
+                this._sublayer.forEach(function(sublayer){
+                    sublayer.setSQL(this.sqlBuilder2_0(storeConfig));
+                }.bind(this));
+            }
+        }
+    },
+    
+    remoteFilter: true,
     config: {
         style: null,
-        storeId: null
+        storeId: null,
+        applyFilterToLayer: true
     },
     model: 'CartoDb.CartoDataModel',
     // proxy: {
@@ -24,6 +45,7 @@ Ext.define('CartoDb.CartoStore',{
     getCartoSql: function(isMap) {
         return this.createCartoSql(isMap);
     },
+    
     createCartoSql: function(isMap) {
         this._sql = this.sqlBuilder2_0(this.getProxy().getCurrentConfig(), {
             extraSelect: (isMap) ? ["'" + this.getStoreId() + "' AS carto_store_id"] : null
@@ -137,4 +159,10 @@ Ext.define('CartoDb.CartoStore',{
         console.log(css);
         return css;
     }
+    //  onFilterEndUpdate: function() {
+    //      this.callParent(arguments);
+    //      if(this.getApplyFilterToLayer() && !this.suppressNextFilter){
+    //          debugger
+    //      }
+    //  }
 });
