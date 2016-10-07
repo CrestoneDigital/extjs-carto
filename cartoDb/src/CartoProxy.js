@@ -20,6 +20,7 @@ Ext.define('CartoDb.CartoProxy', {
         groupBy: '',
         orderBy: '',
         username: '',
+        mode: null,
         mapLock: false,
         enableData: true,
         enableBounds: false,
@@ -52,9 +53,14 @@ Ext.define('CartoDb.CartoProxy', {
      */
     buildRequest: function(operation) {
         var me = this,
-            request, operationId, idParam;
+            request, operationId, idParam, sql;
+        switch (this.getMode()) {
+            case 'tables': sql = this.getTablesSql; break;
+            case 'columns': sql = this.getColumnsSql.replace(/{{table_name}}/, this.getTable()); break;
+            default: sql = this.sqlBuilder2_0( Ext.apply(me.getParams(operation), this.getCurrentConfig()) );
+        }
         var params = {
-            q: this.sqlBuilder2_0( Ext.apply(me.getParams(operation), this.getCurrentConfig()) )
+            q: sql
         };
 
         // Set up the entity id parameter according to the configured name.

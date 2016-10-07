@@ -1,12 +1,15 @@
 Ext.define('CartoDb.CartoStore',{
     extend: 'Ext.data.Store',
     alias: 'store.CartoStore',
+    requires: [
+        'CartoDb.CartoProxy'
+    ],
     mixins: [
         'CartoDb.CartoSqlMixin'
     ],
-    requires: [
-        'CartoDb.CartoDataModel'
-    ],
+    // requires: [
+    //     'CartoDb.CartoDataModel'
+    // ],
     listeners: {
         filterchange: function(store, filters) {
             var storeConfig    = this.getProxy().getCurrentConfig();
@@ -18,21 +21,41 @@ Ext.define('CartoDb.CartoStore',{
                         property: item._property
                     });
             }.bind(this));
-            if(this._sublayer){
-                this._sublayer.forEach(function(sublayer){
-                    sublayer.setSQL(this.sqlBuilder2_0(storeConfig));
-                }.bind(this));
+            if(this._subLayer){
+                // this._subLayer.forEach(function(subLayer){
+                    this._subLayer.setSQL(this.sqlBuilder2_0(storeConfig));
+                // }.bind(this));
             }
         }
     },
     
     remoteFilter: true,
+    remoteSort: true,
     config: {
         style: null,
         storeId: null,
+        groupBy: null,
         applyFilterToLayer: true
     },
-    model: 'CartoDb.CartoDataModel',
+
+    applyGroupBy: function(groupBy, groupByCollection) {
+        return groupBy;
+    },
+
+    // applyFilters: function(filters, filtersCollection) {
+    //     var temp = this.callParent([filters, filtersCollection]);
+    //     debugger
+    // },
+
+    setLoadOptions: function(options) {
+        var me = this,
+            groupBy = me.getGroupBy();
+        if (groupBy) {
+            options.groupBy = groupBy;
+        }
+        me.callParent([options]);
+    },
+    // model: 'CartoDb.CartoDataModel',
     // proxy: {
     //         type: 'carto',
     //         username: 'crestonedigital',

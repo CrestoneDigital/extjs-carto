@@ -13,7 +13,13 @@ Ext.define('CartoDb.CartoSqlMixin', {
      * @param  {} table
      */
     sqlBuilder2_0: function (params, options) {
-        var fields = '*';
+        // debugger
+        var fields;
+        if (params.groupBy = this.createGroupBy(params.groupBy)) {
+            fields = params.groupBy.selectSql + ',COUNT(*) AS cnt';
+        } else {
+            fields = '*';
+        }
         if (Ext.isArray(params.select)) {
             fields = params.select.join(',');
         }
@@ -33,11 +39,15 @@ Ext.define('CartoDb.CartoSqlMixin', {
         var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' Where 1=1 ';
         sql += this.whereClauseBuilder3_0(params.where);
         sql += this.getFilter(params);
+        sql += this.getGroupByIfExists(params.groupBy);
         // sql += this.getBounds(params);
         sql += this.getOrder(params);
         sql += this.getPaging(params);
         return sql;
     },
+
+    getTablesSql: "SELECT CDB_UserTables('public') AS table",
+    getColumnsSql: "SELECT CDB_ColumnNames('{{table_name}}') AS column",
 
     getFilter: function(params) {
         var str = '';
@@ -46,7 +56,6 @@ Ext.define('CartoDb.CartoSqlMixin', {
             tmpAr.forEach(function(rec) {
                 if (rec.property && rec.value) {
                     var operator = (rec.operator) ? rec.operator : '=';
-                    debugger
                     switch(operator) {
                         case 'like':
                             str += ' AND ' + rec.property + ' ' + operator + " '" + rec.value + "%' ";
@@ -74,13 +83,25 @@ Ext.define('CartoDb.CartoSqlMixin', {
                             }else{
                                 str += ' AND ' + rec.property + ' ' + " = "  + rec.value;
                             }
-                            
+                            break;
+                        case 'in':
+                            if(Ext.isArray(rec.value)) {
+                                var temp = rec.value.slice();
+                                for (var i = 0; i < temp.length; i++) temp[i] = this.wrap(temp[i]);
+                                str += ' AND ARRAY[' + rec.property + '] <@ ARRAY[' + temp.join(',') + ']';
+                            }
                             break;
                             // return '1'
                     }
+                } else if (rec.property && rec.operator) {
+                    switch (rec.operator) {
+                        case 'notnull':
+                            str += ' AND ' + rec.property + ' IS NOT NULL';
+                            break;
+                    }
                 }
                 return '';
-            });
+            }.bind(this));
         }
         return str;
     },
@@ -96,8 +117,16 @@ Ext.define('CartoDb.CartoSqlMixin', {
         return str;
     },
 
+    getGroupByIfExists: function(group) {
+        if (group) {
+            return ' GROUP BY ' + group.groupBySql; 
+        }
+        return '';
+    },
+
     getOrder: function(params) {
         var str = '';
+        // debugger
         var tmpAr = Ext.JSON.decode(params.sort);
         if (tmpAr && tmpAr.length > 0) {
             str += ' ORDER BY';
@@ -181,8 +210,50 @@ Ext.define('CartoDb.CartoSqlMixin', {
         return true;
     },
 
-
     verifyOrderBy: function(){
         return true;
-    }
+    },
+
+    createGroupBy: function(group) {
+        if (!group || group.isGroupBy) {
+            return group;
+        }
+        if (typeof group === 'string' || Ext.isArray(group)) {
+            group = {fields: group};
+        }
+        var fields = group.fields = Ext.isArray(group.fields) ? group.fields : [group.fields],
+            field, selectSql = '', groupBySql = '';
+        for (var i = 0; i < fields.length; i++) {
+            field = new Ext.data.field.Field(fields[i]);
+            if (!field.property) {
+                field.sql = this.wrapAggregate(field);
+            } else {
+                field.sql = this.wrapAggregate(field) + ' AS ' + field.name;
+            }
+            selectSql += field.sql + ',';
+            if (!field.aggregateType) {
+                groupBySql += field.name + ',';
+            }
+            fields[i] = field;
+        }
+        group.selectSql = selectSql.slice(0,-1);
+        group.groupBySql = groupBySql.slice(0,-1);
+        group.isGroupBy = true;
+        return group;
+    },
+
+    wrapAggregate: function(field) {
+        if (field.aggregateType) {
+            field.aggregateType = field.aggregateType.toUpperCase();
+            if (this.allowedAggregateTypes.indexOf(field.aggregateType) === -1) {
+                console.warn("Unknown aggregate type '" + field.aggregateType + "'. Skipping.");
+                field.aggregateType = null;
+            } else {
+                return field.aggregateType + '(' + (field.property || field.name) + ')';
+            }
+        }
+        return field.property || field.name;
+    },
+
+    allowedAggregateTypes: ['AVG', 'SUM', 'COUNT', 'MIN', 'MAX', 'STDDEV']
 });

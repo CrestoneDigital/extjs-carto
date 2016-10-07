@@ -207,33 +207,59 @@ Ext.define('CartoDb.CartoMap', {
     },
 
     updateStoresByBounds: function() {
-        if(this.getStores() && this.storesToLock) {
-            for(var i = 0; i < this.getStores().length; i++) {
-                if(this.storesToLock.indexOf(this.getStores()[i].getStoreId()) > -1) {
-                    Ext.apply(this.getStores()[i].getProxy().getWhere(), {
-                                bounds: {
-                                    type: 'bounds',
-                                    bounds: this.getBounds()
-                                }
-                            }
-                    );
-                    this.getStores()[i].load();
+        if(this.storesToLock) {
+            // for(var i = 0; i < this.getStores().length; i++) {
+            //     if(this.storesToLock.indexOf(this.getStores()[i].getStoreId()) > -1) {
+            //         Ext.apply(this.getStores()[i].getProxy().getWhere(), {
+            //                     bounds: {
+            //                         type: 'bounds',
+            //                         bounds: this.getBounds()
+            //                     }
+            //                 }
+            //         );
+            //         this.getStores()[i].load();
+            //     }
+            // }
+            var store;
+            for(var i = 0; i < this.storesToLock.length; i++) {
+                if(store = Ext.getStore(this.storesToLock[i])) {
+                    Ext.apply(store.getProxy().getWhere(), {
+                        bounds: {
+                            type: 'bounds',
+                            bounds: this.getBounds()
+                        }
+                    });
+                    store.load();
                 }
             }
         }
     },
 
     resetStores: function() {
-        if(this.getStores()) {
-            for(var i = 0; i < this.getStores().length; i++) {
-                Ext.apply(this.getStores()[i].getProxy().getWhere(), {
-                            bounds: {
-                                type: 'bounds',
-                                bounds: null
-                            }
+        // if(this.getStores()) {
+        //     for(var i = 0; i < this.getStores().length; i++) {
+        //         Ext.apply(this.getStores()[i].getProxy().getWhere(), {
+        //                     bounds: {
+        //                         type: 'bounds',
+        //                         bounds: null
+        //                     }
+        //                 }
+        //         )
+        //         this.getStores()[i].load();
+        //     }
+        // }
+        if(this.storesToLock) {
+            var store;
+            for(var i = 0; i < this.storesToLock.length; i++) {
+                if(store = Ext.getStore(this.storesToLock[i])) {
+                    Ext.apply(store.getProxy().getWhere(), {
+                        bounds: {
+                            type: 'bounds',
+                            bounds: null
                         }
-                )
-                this.getStores()[i].load();
+                    });
+                    store.load();
+                }
             }
         }
     },
@@ -253,15 +279,17 @@ Ext.define('CartoDb.CartoMap', {
             if(err) {
                 console.log('Error: ' + err);
             }else{
-                return callback(null, layer);
+                return callback ? callback(null, layer) : null;
             }
         });
     },
 
     removeLayerAtIndex: function(index, callback) {
         var layer = this.getLayers()[index];
-        this.getMap().removeLayer(layer);
-        this.getLayers().splice(index,1);
+        if (layer) {
+            this.getMap().removeLayer(layer);
+            this.getLayers().splice(index,1);
+        }
     },
 
     createLayer: function(data, cb){
@@ -315,6 +343,13 @@ Ext.define('CartoDb.CartoMap', {
 
     createDataStores: function(data) {
         var storesArray = [];
+        if (storesArray.length > 0) {
+            for (var i = 0; i < storesArray.length; i++) {
+                if (typeof storesArray[i] === 'string') {
+                    storesArray[i] = Ext.getStore(storesArray[i]);
+                }
+            }
+        }
         data.subLayers.forEach(function(item, index){
             var storeId = (item.storeId) ? item.storeId : new Date().getTime();
             var username = (data.username) ? data.username : this.getUsername();
