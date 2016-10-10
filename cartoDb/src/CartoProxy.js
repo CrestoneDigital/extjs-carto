@@ -17,7 +17,7 @@ Ext.define('CartoDb.CartoProxy', {
         table: '',
         select: '',
         where: {},
-        groupBy: '',
+        groupBy: null,
         orderBy: '',
         username: '',
         mode: null,
@@ -26,6 +26,16 @@ Ext.define('CartoDb.CartoProxy', {
         enableBounds: false,
         enableLatLng: false,
         limit: null
+    },
+
+    addGroupByField: function(field) {
+        var groupBy = this.getGroupBy();
+        if (!groupBy) {
+            groupBy = Ext.create('CartoDb.CartoGroupBy', field);
+        } else {
+            groupBy.addField(field);
+        }
+        this.setGroupBy(groupBy);
     },
 
     /**
@@ -56,7 +66,7 @@ Ext.define('CartoDb.CartoProxy', {
             request, operationId, idParam, sql;
         switch (this.getMode()) {
             case 'tables': sql = this.getTablesSql; break;
-            case 'columns': sql = this.getColumnsSql.replace(/{{table_name}}/, this.getTable()); break;
+            case 'columns': sql = this.getColumnsSql.replace(/{{table_name}}/g, this.getTable()); break;
             default: sql = this.sqlBuilder2_0( Ext.apply(me.getParams(operation), this.getCurrentConfig()) );
         }
         var params = {

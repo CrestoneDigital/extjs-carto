@@ -1,4 +1,8 @@
 Ext.define('CartoDb.CartoSqlMixin', {
+
+    requires: [
+        'CartoDb.CartoGroupBy'
+    ],
      
      /**
      * @param  {} table
@@ -14,9 +18,14 @@ Ext.define('CartoDb.CartoSqlMixin', {
      */
     sqlBuilder2_0: function (params, options) {
         // debugger
-        var fields;
-        if (params.groupBy = this.createGroupBy(params.groupBy)) {
-            fields = params.groupBy.selectSql + ',COUNT(*) AS cnt';
+        var fields,
+            groupBy = this.getGroupBy();
+        if (groupBy) {
+            if (!groupBy.isGroupBy) {
+                groupBy = Ext.create('CartoDb.CartoGroupBy', params.groupBy);
+                this.setGroupBy(groupBy);
+            }
+            fields = groupBy.getSelectSql() + ',COUNT(*) AS cnt';
         } else {
             fields = '*';
         }
@@ -39,15 +48,15 @@ Ext.define('CartoDb.CartoSqlMixin', {
         var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' Where 1=1 ';
         sql += this.whereClauseBuilder3_0(params.where);
         sql += this.getFilter(params);
-        sql += this.getGroupByIfExists(params.groupBy);
+        sql += this.getGroupByIfExists(groupBy);
         // sql += this.getBounds(params);
         sql += this.getOrder(params);
         sql += this.getPaging(params);
         return sql;
     },
 
-    getTablesSql: "SELECT CDB_UserTables('public') AS table",
-    getColumnsSql: "SELECT CDB_ColumnNames('{{table_name}}') AS column",
+    getTablesSql: "SELECT CDB_UserTables('public') AS table_name",
+    getColumnsSql: "SELECT column_name, CDB_ColumnType('{{table_name}}', column_name) AS column_type FROM CDB_ColumnNames('{{table_name}}') AS column_name",
 
     getFilter: function(params) {
         var str = '';
@@ -119,7 +128,7 @@ Ext.define('CartoDb.CartoSqlMixin', {
 
     getGroupByIfExists: function(group) {
         if (group) {
-            return ' GROUP BY ' + group.groupBySql; 
+            return ' GROUP BY ' + group.getGroupBySql(); 
         }
         return '';
     },
@@ -214,46 +223,46 @@ Ext.define('CartoDb.CartoSqlMixin', {
         return true;
     },
 
-    createGroupBy: function(group) {
-        if (!group || group.isGroupBy) {
-            return group;
-        }
-        if (typeof group === 'string' || Ext.isArray(group)) {
-            group = {fields: group};
-        }
-        var fields = group.fields = Ext.isArray(group.fields) ? group.fields : [group.fields],
-            field, selectSql = '', groupBySql = '';
-        for (var i = 0; i < fields.length; i++) {
-            field = new Ext.data.field.Field(fields[i]);
-            if (!field.property) {
-                field.sql = this.wrapAggregate(field);
-            } else {
-                field.sql = this.wrapAggregate(field) + ' AS ' + field.name;
-            }
-            selectSql += field.sql + ',';
-            if (!field.aggregateType) {
-                groupBySql += field.name + ',';
-            }
-            fields[i] = field;
-        }
-        group.selectSql = selectSql.slice(0,-1);
-        group.groupBySql = groupBySql.slice(0,-1);
-        group.isGroupBy = true;
-        return group;
-    },
+    // createGroupBy: function(group) {
+    //     // if (!group || group.isGroupBy) {
+    //     //     return group;
+    //     // }
+    //     // if (typeof group === 'string' || Ext.isArray(group)) {
+    //     //     group = {fields: group};
+    //     // }
+    //     // var fields = group.fields = Ext.isArray(group.fields) ? group.fields : [group.fields],
+    //     //     field, selectSql = '', groupBySql = '';
+    //     // for (var i = 0; i < fields.length; i++) {
+    //     //     field = new Ext.data.field.Field(fields[i]);
+    //     //     if (!field.property) {
+    //     //         field.sql = this.wrapAggregate(field);
+    //     //     } else {
+    //     //         field.sql = this.wrapAggregate(field) + ' AS ' + field.name;
+    //     //     }
+    //     //     selectSql += field.sql + ',';
+    //     //     if (!field.aggregateType) {
+    //     //         groupBySql += field.name + ',';
+    //     //     }
+    //     //     fields[i] = field;
+    //     // }
+    //     // group.selectSql = selectSql.slice(0,-1);
+    //     // group.groupBySql = groupBySql.slice(0,-1);
+    //     // group.isGroupBy = true;
+    //     // return group;
+    // },
 
-    wrapAggregate: function(field) {
-        if (field.aggregateType) {
-            field.aggregateType = field.aggregateType.toUpperCase();
-            if (this.allowedAggregateTypes.indexOf(field.aggregateType) === -1) {
-                console.warn("Unknown aggregate type '" + field.aggregateType + "'. Skipping.");
-                field.aggregateType = null;
-            } else {
-                return field.aggregateType + '(' + (field.property || field.name) + ')';
-            }
-        }
-        return field.property || field.name;
-    },
+    // wrapAggregate: function(field) {
+    //     if (field.aggregateType) {
+    //         field.aggregateType = field.aggregateType.toUpperCase();
+    //         if (this.allowedAggregateTypes.indexOf(field.aggregateType) === -1) {
+    //             console.warn("Unknown aggregate type '" + field.aggregateType + "'. Skipping.");
+    //             field.aggregateType = null;
+    //         } else {
+    //             return field.aggregateType + '(' + (field.property || field.name) + ')';
+    //         }
+    //     }
+    //     return field.property || field.name;
+    // },
 
-    allowedAggregateTypes: ['AVG', 'SUM', 'COUNT', 'MIN', 'MAX', 'STDDEV']
+    // allowedAggregateTypes: ['AVG', 'SUM', 'COUNT', 'MIN', 'MAX', 'STDDEV']
 });

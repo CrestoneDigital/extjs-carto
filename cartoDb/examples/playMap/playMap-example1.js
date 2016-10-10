@@ -6,112 +6,82 @@ Ext.require([
     'CartoDb.CartoStore',
     'CartoDb.CartoProxy',
     'Ext.data.Store'
-    // 'Ext.chart.CartesianChart',
-    // 'Ext.chart.axis.Numeric',
-    // 'Ext.chart.axis.Category',
-    // 'Ext.chart.series.Bar'
 ]);
 var aboutHtml = ['<div class="about-style"><p>Data provided by <a href="http://wildfire.cr.usgs.gov/firehistory/index.html" target="_blank">The USGS Federal Fire Occurrence Website</a>.',
 'The Federal Fire Occurrence Website is an official government website that provides users with the ability to query, research and download wildland fire occurrence data. The Federal Fire Occurrence Website is an official Department of the Interior Website provided by the United States Geological Survey.<br>',
 'Wildfire data avaliable at <a href="http://wildfire.cr.usgs.gov/firehistory/data.html" target="_blank">http://wildfire.cr.usgs.gov/firehistory/data.html</a>.</p>',
 '<p><img class="header_logo pull-left" height="90" width="163" src="http://www.crestonedigital.com/resources/images/crestone-digital-logo-white-lg.jpg">Being based in Colorado means that we deal with forest fires on an annual basis. Here at Crestone Digital we wanted to tell more with the data that is being collected and allow others to explore our countries histories wildfires. With CartoDB we have been able to leverage real time filters and statistics with ~700k incidents. Crestone Digital is a full service software solutions provider for all industries and would love to work on your next project. <a href="http://www.crestonedigital.com/" target="_blank">Visit our website to learn more</a>.</p></div>'].join('');
 
-var simplePointCss =    '#table {\n' +
-                        '   marker-fill-opacity: 0.9;\n' +
-                        '   marker-line-color: #FFF;\n' +
-                        '   marker-line-width: 1.5;\n' +
-                        '   marker-line-opacity: 1;\n' +
-                        '   marker-placement: point;\n' +
-                        '   marker-type: ellipse;\n' +
-                        '   marker-width: 10;\n' +
-                        '   marker-fill: #FF6600;\n' +
-                        '   marker-allow-overlap: true;\n' +
-                        '}';
-var simpleLineCss =     '#table {\n' +
-                        '  line-color: #FFF;\n' +
-                        '  line-width: 0.5;\n' +
-                        '  line-opacity: 1;\n' +
-                        '}';
-var simplePolygonCss =  '#table {\n' +
-                        '  polygon-fill: #FF6600;\n' +
-                        '  polygon-opacity: 0.7;\n' +
-                        '  line-color: #FFF;\n' +
-                        '  line-width: 0.5;\n' +
-                        '  line-opacity: 1;\n' +
-                        '}';
-var toIgnore = ['cartodb_id', 'the_geom', 'the_geom_webmercator'];
+var simplePointCss   =    '#table {\n   marker-fill-opacity: 0.9;\n   marker-line-color: #FFF;\n   marker-line-width: 1.5;\n   marker-line-opacity: 1;\n   marker-placement: point;\n   marker-type: ellipse;\n   marker-width: 10;\n   marker-fill: #FF6600;\n   marker-allow-overlap: true;\n}';
+var simpleLineCss    =     '#table {\n  line-color: #FFF;\n  line-width: 0.5;\n  line-opacity: 1;\n}';
+var simplePolygonCss =  '#table {\n  polygon-fill: #FF6600;\n  polygon-opacity: 0.7;\n  line-color: #FFF;\n  line-width: 0.5;\n  line-opacity: 1;\n}';
+var columnsToIgnore  = ['cartodb_id', 'the_geom', 'the_geom_webmercator'];
+var numberTypes      = ['double precision', 'integer', 'number'];
 
 var mapController = Ext.create('Ext.app.ViewController',{
-    init: function() {
-        // var totalsStore = Ext.create('CartoDb.CartoStore', {
-        //     storeId: 'totalsStore',
-        //     proxy: {
-        //         type: 'carto',
-        //         table: 'wildfire',
-        //         username: 'crestonedigital',
-        //         groupBy: 'cause'
-        //     },
-        //     listeners: {
-        //         load: {
-        //             fn: 'updateData',
-        //             scope: this
-        //         }
-        //     },
-        //     autoLoad: true
-        // });
-        this.stores = [
-            Ext.getStore('tableStore'),
-            Ext.create('CartoDb.CartoStore', {
-                storeId: 'columnsStore',
-                proxy: {
-                    type: 'carto',
-                    username: 'crestonedigital',
-                    mode: 'columns'
-                },
-                listeners: {
-                    load: {
-                        fn: 'addFilters',
-                        scope: this
-                    }
-                }
-            })
-        ];
+    initViewModel: function() {
+        this.stores = [this.getStore('tables'), this.getStore('columns'), this.getStore('stats')];
+        this.boxes  = [this.lookup('fieldBox'), this.lookup('sumBox'), this.lookup('avgBox'), this.lookup('minBox'), this.lookup('maxBox')];
     },
-    setByStr: function(str, value, load) {
+    reset: function(all) {
+        if (all) this.lookup('tableBox').clearValue();
+        for (var i in this.boxes) {
+            this.boxes[i].clearValue();
+        }
+        this.lookup('filtersView').removeAll();
+        this.lookup('map').removeLayerAtIndex(0);
+        this.lookup('cssOptions').setValue(simplePointCss);
+        this.lookup('cssEditor').setValue(simplePointCss);
+        this.getStore('stats').removeAll();
+        this.getStore('stats').getProxy().setGroupBy(null);
+    },
+    setByStr: function(str, value) {
         for (var i = 0; i < this.stores.length; i++) {
             this.stores[i].getProxy()[str](value);
-            if (load) this.stores[i].load();
         }
     },
     onSelectUsername: function(field, e) {
         var value = field.getValue();
-        this.setByStr('setUsername', value, false);
-        this.lookup('tableBox').clearValue();
-        this.getViewModel().set('username', value);
+        if (value !== this.getViewModel().get('username')) {
+            this.reset(true);
+            this.setByStr('setUsername', value);
+            this.getViewModel().set('username', value);
+            this.getStore('tables').load();
+        }
     },
     onSelectTable: function(combo, record) {
-        var value = record.get('table'),
-            map = this.lookup('map');
-        this.setByStr('setTable', value, true);
+        var value = record.get('table_name');
+        this.reset(false);
+        this.setByStr('setTable', value);
         this.getViewModel().set('table', value);
-        map.removeLayerAtIndex(0);
-        map.addLayer({
+        this.lookup('map').addLayer({
             username: this.getViewModel().get('username'),
             subLayers: [{
                 storeId: 'layer1',
                 table: value
             }]
         });
+        this.getStore('columns').load();
+    },
+    onSelectColumn: function(combo, record) {
+        var value = record.get('column_name'),
+            store = this.getStore('stats'),
+            box = combo.getReference().replace(/Box/, '');
+        store.getProxy().addGroupByField({
+            property: value,
+            name: box,
+            aggregateType: box === 'field' ? null : box
+        });
+        store.load();
     },
     addFilters: function(store, records) {
         var filtersView = this.lookup('filtersView'),
             table = this.getViewModel().get('table'),
             username = this.getViewModel().get('username'),
             column;
-        filtersView.removeAll();
         for (var i = 0; i < records.length; i++) {
-            column = records[i].get('column');
-            if (toIgnore.indexOf(column) === -1) {
+            column = records[i].get('column_name');
+            if (columnsToIgnore.indexOf(column) === -1) {
                 filtersView.add(Ext.create('Ext.form.field.Tag', {
                     reference: 'carto-filter-' + i,
                     fieldLabel: column,
@@ -135,35 +105,21 @@ var mapController = Ext.create('Ext.app.ViewController',{
     onApplyCss: function() {
         Ext.getStore('layer1').getSubLayer().setCartoCSS(this.lookup('cssEditor').getValue());
     },
-    // updateData: function(store, records) {
-    //     data = {};
-    //     for (var i = 0; i < records.length; i++) {
-    //         var cause = records[i].get('cause') || 'Unknown';
-    //         data[cause] = records[i].get('cnt');
-    //     }
-    //     this.lookup('summaryview').setData(data);
-    // },
-    // onAbout: function() {
-    //     Ext.create('Ext.window.Window', {
-    //         title: 'About Project',
-    //         html: aboutHtml,
-    //         modal: true,
-    //         width: 898,
-    //         height: 298,
-    //         padding: 15,
-    //         bodyCls: 'about'
-    //     }).show();
-    // },
-    // showAllFires: function() {
-    //     Ext.getStore('layer1').getSubLayer().setCartoCSS(allFiresCss);
-    // },
-    // showCauseOfFires: function() {
-    //     Ext.getStore('layer1').getSubLayer().setCartoCSS(causeOfFiresCss);
-    // },
+    onAbout: function() {
+        Ext.create('Ext.window.Window', {
+            title: 'About Project',
+            html: aboutHtml,
+            modal: true,
+            width: 898,
+            height: 298,
+            padding: 15,
+            bodyCls: 'about'
+        }).show();
+    },
     onFilterChange: function(field, newValue, oldValue) {
         var filter = field.getReference(),
             property = field.valueField,
-            stores = [Ext.getStore('layer1')],
+            stores = [Ext.getStore('layer1'), this.getStore('stats')],
             containsFilter = newValue.length > 0;
         for (var i = 0; i < stores.length; i++) {
             stores[i].removeFilter(filter, containsFilter);
@@ -179,26 +135,6 @@ var mapController = Ext.create('Ext.app.ViewController',{
     }
 });
 
-var mapViewModel = Ext.create('Ext.app.ViewModel', {
-    formulas: {
-        cssChoice: {
-            bind: '{cssOptions.value}',
-            get: function(value) {
-                switch (value) {
-                    case 0: return simplePointCss;
-                    case 1: return simpleLineCss;
-                    case 2: return simplePolygonCss;
-                    default: return '';
-                }
-            }
-        }
-    },
-    data: {
-        username: 'crestonedigital',
-        table: null
-    }
-});
-
 Ext.onReady(function () {
     Ext.QuickTips.init();
 
@@ -208,7 +144,74 @@ Ext.onReady(function () {
             xtype: 'panel',
             layout: 'border',
             controller: mapController,
-            viewModel: mapViewModel,
+            viewModel: {
+                stores: {
+                    tables: {
+                        storeId: 'tablesStore',
+                        sorters: 'table_name',
+                        proxy: {
+                            type: 'carto',
+                            mode: 'tables',
+                            username: 'crestonedigital'
+                        }
+                    },
+                    columns: {
+                        storeId: 'columnsStore',
+                        proxy: {
+                            type: 'carto',
+                            username: 'crestonedigital',
+                            mode: 'columns'
+                        },
+                        filters: [
+                            function(data) {
+                                return columnsToIgnore.indexOf(data.get('column_name')) === -1;
+                            }
+                        ],
+                        listeners: {
+                            load: 'addFilters'
+                        }
+                    },
+                    numberColumns: {
+                        source: '{columns}',
+                        filters: [
+                            function(data) {
+                                return numberTypes.indexOf(data.get('column_type')) > -1;
+                            }
+                        ]
+                    },
+                    stats: {
+                        type: 'CartoStore',
+                        storeId: 'statsStore',
+                        sorters: 'field',
+                        listeners: {
+                            beforeload: function(store, operation) {
+                                return !!store.getProxy().getGroupBy();
+                            }
+                        },
+                        proxy: {
+                            type: 'carto',
+                            username: 'crestonedigital',
+                            reader: {
+                                transform: function(data) {
+                                    var cnt = Ext.Array.pluck(data.rows, 'cnt'),
+                                        avg = jStat.mean(cnt),
+                                        dev = jStat.stdev(cnt, true);
+
+                                    return data.rows.map(function(row) {
+                                        var sig = Math.floor(Math.abs((row.cnt - avg)/dev));
+                                        row.sig = (isNaN(sig)) ? 0 : sig;
+                                        return row;
+                                    });
+                                }
+                            }
+                        }
+                    }
+                },
+                data: {
+                    username: 'crestonedigital',
+                    table: null
+                }
+            },
             items: [{
                 xtype: 'panel',
                 region: 'center',
@@ -217,27 +220,11 @@ Ext.onReady(function () {
                     xtype: "cartoMap",
                     center: 'us',
                     reference: 'map',
-                    baseLayerName: 'Dark Matter (lite)'
-                    // bind: {
-                    //     mapLock: '{mapLock.checked}',
-                    // },
-                    // storesToLock: ['firesStats', 'totalsStore'],
-                }],
-                tbar: [{
-                    xtype: 'segmentedbutton',
-                    items: [{
-                        text: 'All Fires',
-                        handler: 'showAllFires',
-                        pressed: true
-                    }, {
-                        text: 'Cause',
-                        handler: 'showCauseOfFires'
-                    }]
-                }, '->', {
-                    xtype: 'checkbox',
-                    reference: 'mapLock',
-                    fieldLabel: 'Show statistics in map frame',
-                    labelWidth: 170
+                    baseLayerName: 'Dark Matter (lite)',
+                    bind: {
+                        mapLock: '{mapLock.checked}',
+                    },
+                    storesToLock: ['statsStore'],
                 }]
             }, {
                 xtype: 'tabpanel',
@@ -270,18 +257,22 @@ Ext.onReady(function () {
                         reference: 'cssOptions',
                         items: [{
                             text: 'Point',
+                            value: simplePointCss,
                             pressed: true
                         }, {
-                            text: 'Line'
+                            text: 'Line',
+                            value: simpleLineCss
                         }, {
-                            text: 'Polygon'
+                            text: 'Polygon',
+                            value: simplePolygonCss
                         }]
                     }, '->'],
                     items: [{
                         xtype: 'textareafield',
                         reference: 'cssEditor',
+                        ui: 'carto-editor-cls',
                         bind: {
-                            value: '{cssChoice}'
+                            value: '{cssOptions.value}'
                         },
                         height: '100%',
                         width: '100%'
@@ -297,13 +288,14 @@ Ext.onReady(function () {
                         handler: 'onApplyCss'
                     }]
                 }, {
-                    // xtype: 'cartesian',
                     xtype: 'grid',
                     columns: [
-                        {text: 'Year', dataIndex: 'year', align: 'end', width: 65},
-                        {text: 'Number of Fires', dataIndex: 'cnt', align: 'end', xtype: 'numbercolumn', format: '0,000', flex: 1},
-                        {text: 'Total Acres', dataIndex: 'sum', align: 'end', xtype: 'numbercolumn', format: '0,000.00', flex: 1},
-                        {text: 'Average Acres', dataIndex: 'avg', align: 'end', xtype: 'numbercolumn', format: '0,000.00', flex: 1}
+                        {text: 'Column', dataIndex: 'field', align: 'end', flex: 1},
+                        {text: 'Count', dataIndex: 'cnt', align: 'end', xtype: 'numbercolumn', format: '0,000', flex: 1},
+                        {text: 'Sum', dataIndex: 'sum', align: 'end', xtype: 'numbercolumn', format: '0,000.00', flex: 1},
+                        {text: 'Average', dataIndex: 'avg', align: 'end', xtype: 'numbercolumn', format: '0,000.00', flex: 1},
+                        {text: 'Min', dataIndex: 'min', align: 'end', xtype: 'numbercolumn', format: '0,000.00', flex: 1},
+                        {text: 'Max', dataIndex: 'max', align: 'end', xtype: 'numbercolumn', format: '0,000.00', flex: 1}
                     ],
                     title: 'Statistics',
                     viewConfig: {
@@ -317,112 +309,90 @@ Ext.onReady(function () {
                             }
                         }
                     },
-                    // tbar: ['->', {
-                    //     xtype: 'segmentedbutton',
-                    //     items: [{
-                    //         text: 'Acres'
-                    //     }, {
-                    //         text: 'Fires'
-                    //     }]
-                    // }, '->'],
-                    store: {
-                        type: 'CartoStore',
-                        autoLoad: true,
-                        storeId: 'firesStats',
-                        filters: [{
-                            property: 'year_',
-                            operator: 'notnull'
-                        }],
-                        // groupBy: [{
-                        //     property: 'year_',
-                        //     name: 'year'
-                        // }, {
-                        //     property: 'totalacres',
-                        //     name: 'acres',
-                        //     aggregateType: 'sum'
-                        // }],
-                        sorters: {
-                            property: 'year',
-                            direction: 'desc'
-                        },
-                        proxy: {
-                            type: 'carto',
-                            table: 'wildfire',
-                            username: 'crestonedigital',
-                            groupBy: [{
-                                property: 'year_',
-                                name: 'year'
-                            }, {
-                                property: 'totalacres',
-                                name: 'sum',
-                                aggregateType: 'sum'
-                            }, {
-                                property: 'totalacres',
-                                name: 'avg',
-                                aggregateType: 'avg'
-                            }, {
-                                property: 'totalacres',
-                                name: 'min',
-                                aggregateType: 'min'
-                            }, {
-                                property: 'totalacres',
-                                name: 'max',
-                                aggregateType: 'max'
-                            }, {
-                                property: 'totalacres',
-                                name: 'dev',
-                                aggregateType: 'stddev'
-                            }],
-                            reader: {
-                                transform: function(data) {
-                                    var acres = Ext.Array.pluck(data.rows, 'sum'),
-                                        avg = jStat.mean(acres),
-                                        dev = jStat.stdev(acres, true);
-
-                                    return data.rows.map(function(row) {
-                                        var sig = Math.floor(Math.abs((row.sum - avg)/dev));
-                                        row.sig = (isNaN(sig)) ? 0 : sig;
-                                        return row;
-                                    });
-                                }
-                            }
-                        }
-                    }
+                    bind: {
+                        store: '{stats}'
+                    },
+                    tbar: ['->', {
+                        xtype: 'checkbox',
+                        reference: 'mapLock',
+                        fieldLabel: 'Show statistics in map frame',
+                        labelWidth: 170
+                    }]
                 }]
             }],
-            tbar: [{
-                xtype: 'textfield',
-                reference: 'usernameField',
-                fieldLabel: 'Username',
-                value: 'crestonedigital',
-                listeners: {
-                    blur: 'onSelectUsername'
-                }
-            }, {
-                xtype: 'combobox',
-                reference: 'tableBox',
-                fieldLabel: 'Table',
-                valueField: 'table',
-                displayField: 'table',
-                editable: false,
-                listeners: {
-                    select: 'onSelectTable'
-                },
-                store: {
-                    storeId: 'tableStore',
-                    sorters: 'table',
-                    proxy: {
-                        type: 'carto',
-                        mode: 'tables',
-                        username: 'crestonedigital'
+            tbar: {
+                defaults: {
+                    xtype: 'combobox',
+                    valueField: 'column_name',
+                    displayField: 'column_name',
+                    labelWidth: 65,
+                    editable: false,
+                    listeners: {
+                        select: 'onSelectColumn'
                     }
-                }
-            }, '->', {
-                xtype: 'button',
-                text: 'About',
-                iconCls: 'x-fa fa-question',
-                handler: 'onAbout'
-            }]
+                },
+                items: [{
+                    xtype: 'textfield',
+                    reference: 'usernameField',
+                    fieldLabel: 'Username',
+                    value: 'crestonedigital',
+                    editable: true,
+                    listeners: {
+                        blur: 'onSelectUsername'
+                    }
+                }, {
+                    reference: 'tableBox',
+                    fieldLabel: 'Table',
+                    valueField: 'table_name',
+                    displayField: 'table_name',
+                    listeners: {
+                        select: 'onSelectTable'
+                    },
+                    bind: {
+                        store: '{tables}'
+                    }
+                }, {
+                    reference: 'fieldBox',
+                    fieldLabel: 'Column',
+                    bind: {
+                        store: '{columns}',
+                        disabled: '{!table}'
+                    }
+                }, {
+                    reference: 'sumBox',
+                    fieldLabel: 'Sum',
+                    bind: {
+                        store: '{numberColumns}',
+                        disabled: '{!table}'
+                    }
+                }, {
+                    reference: 'avgBox',
+                    fieldLabel: 'Average',
+                    bind: {
+                        store: '{numberColumns}',
+                        disabled: '{!table}'
+                    }
+                }, {
+                    reference: 'minBox',
+                    fieldLabel: 'Min',
+                    bind: {
+                        store: '{numberColumns}',
+                        disabled: '{!table}'
+                    }
+                }, {
+                    reference: 'maxBox',
+                    fieldLabel: 'Max',
+                    bind: {
+                        store: '{numberColumns}',
+                        disabled: '{!table}'
+                    }
+                }, '->', {
+                    xtype: 'button',
+                    text: 'About',
+                    iconCls: 'x-fa fa-question',
+                    handler: 'onAbout'
+                }]
+            }
         }]
     });
 });

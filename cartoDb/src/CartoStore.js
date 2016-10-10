@@ -114,41 +114,6 @@ Ext.define('CartoDb.CartoStore',{
                 'marker-fill-opacity:0.1; ',
                 '}'].join('');
                 break;
-            // case 'wildfire':
-            //     css = ['#' + table + '{',
-            //         'marker-fill-opacity: 0.05;',
-            //         'marker-line-color: #FFF;',
-            //         'marker-line-width: 0.0;',
-            //         'marker-line-opacity: 1;',
-            //         'marker-placement: point;',
-            //         'marker-type: ellipse;',
-            //         'marker-width: 6;',
-            //         'marker-fill: #FF5C00;',
-            //         'marker-allow-overlap: true;',
-            //     '}',
-            //     '#' + table + ' [zoom <18]{',
-            //         'marker-fill-opacity: 0.7;',
-            //     '}',
-            //     '#' + table + ' [zoom <9]{',
-            //         'marker-fill-opacity: 0.4;',
-            //         'marker-width: 5;',
-            //     '}',
-            //     '#' + table + ' [zoom <8]{',
-            //         'marker-fill-opacity: 0.2;',
-            //         'marker-width: 4;',
-            //     '}',
-            //     '#' + table + ' [zoom <7]{',
-            //         'marker-fill-opacity: 0.08;',
-            //         'marker-width: 3;',
-            //     '}',
-            //     '#' + table + ' [zoom <6]{',
-            //         'marker-fill-opacity: 0.07;',
-            //         'marker-width: 2;',
-            //     '}',
-            //     '#' + table + ' [zoom <5]{',
-            //         'marker-width: 1;',
-            //     '}'].join(' ');
-            //     break;
             case 'intensity':
                 css = ['#' + table + '{',
                     'marker-fill:' + (style.fill || '#FFCC00') + ';',
@@ -179,7 +144,6 @@ Ext.define('CartoDb.CartoStore',{
                 "}"].join(' ');
         }
         this._css = css;
-        console.log(css);
         return css;
     }
     //  onFilterEndUpdate: function() {
