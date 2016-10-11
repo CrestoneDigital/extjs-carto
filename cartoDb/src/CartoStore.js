@@ -7,9 +7,7 @@ Ext.define('CartoDb.CartoStore',{
     mixins: [
         'CartoDb.CartoSqlMixin'
     ],
-    // requires: [
-    //     'CartoDb.CartoDataModel'
-    // ],
+
     listeners: {
         filterchange: function(store, filters) {
             var storeConfig    = this.getProxy().getCurrentConfig();
@@ -22,30 +20,20 @@ Ext.define('CartoDb.CartoStore',{
                     });
             }.bind(this));
             if(this._subLayer){
-                // this._subLayer.forEach(function(subLayer){
-                    this._subLayer.setSQL(this.sqlBuilder2_0(storeConfig));
-                // }.bind(this));
+                this._subLayer.setSQL(this.sqlBuilder(storeConfig));
             }
         }
     },
     
     remoteFilter: true,
     remoteSort: true,
+
     config: {
         style: null,
         storeId: null,
         groupBy: null,
         applyFilterToLayer: true
     },
-
-    applyGroupBy: function(groupBy, groupByCollection) {
-        return groupBy;
-    },
-
-    // applyFilters: function(filters, filtersCollection) {
-    //     var temp = this.callParent([filters, filtersCollection]);
-    //     debugger
-    // },
 
     setLoadOptions: function(options) {
         var me = this,
@@ -55,12 +43,7 @@ Ext.define('CartoDb.CartoStore',{
         }
         me.callParent([options]);
     },
-    // model: 'CartoDb.CartoDataModel',
-    // proxy: {
-    //         type: 'carto',
-    //         username: 'crestonedigital',
-    //         table: 'us_metro_stations'
-    //     },
+    
     getSubLayer: function() {
         return this._subLayer;
     },
@@ -70,13 +53,10 @@ Ext.define('CartoDb.CartoStore',{
     },
     
     createCartoSql: function(isMap) {
-        this._sql = this.sqlBuilder2_0(this.getProxy().getCurrentConfig(), {
+        return this.sqlBuilder(this.getProxy().getCurrentConfig(), {
             extraSelect: (isMap) ? ["'" + this.getStoreId() + "' AS carto_store_id"] : null
         });
-        return this._sql;
     },
-
-
 
     getCartoCSS: function() {
         return this.createCartoCSS();
@@ -90,30 +70,33 @@ Ext.define('CartoDb.CartoStore',{
             return style.css;
         }
         switch(style.type){
-            case 'heat':
-                css = ['Map {',
-                '-torque-frame-count:1;',
-                '-torque-animation-duration:10;',
-                '-torque-time-attribute:"dataperiod";',
-                '-torque-aggregation-function:"count(cartodb_id)";',
-                '-torque-resolution:8;',
-                '-torque-data-aggregation:linear;',
-                '}',
-                '#' + table + '{',
-                'image-filters: colorize-alpha(blue, cyan, lightgreen, yellow , orange, red);',
-                'marker-file: url(http://s3.amazonaws.com/com.cartodb.assets.static/alphamarker.png);',
-                'marker-fill-opacity: 0.4*[value];',
-                'marker-width: 35;',
-                '}',
-                '#' + table + '[frame-offset=1] {',
-                'marker-width:37;',
-                'marker-fill-opacity:0.2; ',
-                '}',
-                '#' + table + '[frame-offset=2] {',
-                'marker-width:39;',
-                'marker-fill-opacity:0.1; ',
-                '}'].join('');
-                break;
+            /**
+             * Coming soon...
+             */
+            // case 'heat':
+            //     css = ['Map {',
+            //     '-torque-frame-count:1;',
+            //     '-torque-animation-duration:10;',
+            //     '-torque-time-attribute:"dataperiod";',
+            //     '-torque-aggregation-function:"count(cartodb_id)";',
+            //     '-torque-resolution:8;',
+            //     '-torque-data-aggregation:linear;',
+            //     '}',
+            //     '#' + table + '{',
+            //     'image-filters: colorize-alpha(blue, cyan, lightgreen, yellow , orange, red);',
+            //     'marker-file: url(http://s3.amazonaws.com/com.cartodb.assets.static/alphamarker.png);',
+            //     'marker-fill-opacity: 0.4*[value];',
+            //     'marker-width: 35;',
+            //     '}',
+            //     '#' + table + '[frame-offset=1] {',
+            //     'marker-width:37;',
+            //     'marker-fill-opacity:0.2; ',
+            //     '}',
+            //     '#' + table + '[frame-offset=2] {',
+            //     'marker-width:39;',
+            //     'marker-fill-opacity:0.1; ',
+            //     '}'].join('');
+            //     break;
             case 'intensity':
                 css = ['#' + table + '{',
                     'marker-fill:' + (style.fill || '#FFCC00') + ';',
@@ -143,13 +126,6 @@ Ext.define('CartoDb.CartoStore',{
                     'marker-allow-overlap: true;',
                 "}"].join(' ');
         }
-        this._css = css;
         return css;
     }
-    //  onFilterEndUpdate: function() {
-    //      this.callParent(arguments);
-    //      if(this.getApplyFilterToLayer() && !this.suppressNextFilter){
-    //          debugger
-    //      }
-    //  }
 });

@@ -10,11 +10,14 @@ Ext.define('CartoDb.CartoGroupBy', {
     },
 
     initConfig: function(config) {
-        var groupBy = this.decodeGroupBy(config);
+        this.decodeGroupBy(config);
         this.callParent();
-        this.setFields(groupBy.fields);
     },
 
+    /**
+     * Adds a field to the `fields` config.
+     * @param  {Object} field
+     */
     addField: function(field) {
         var fields = this.getFields(),
             alreadyExists = false;
@@ -31,10 +34,16 @@ Ext.define('CartoDb.CartoGroupBy', {
         this.setFields(fields);
     },
 
+    /**
+     * Returns the comma-separated field's sql to be inserted in the SELECT statement.
+     */
     getSelectSql: function() {
         return Ext.pluck(this.getFields(), 'sql').join(',');;
     },
 
+    /**
+     * Returns the comma-separated field's sql to be inserted in the GROUP BY statement.'
+     */
     getGroupBySql: function() {
         var sql = '',
             fields = this.getFields();
@@ -44,22 +53,26 @@ Ext.define('CartoDb.CartoGroupBy', {
         return sql.slice(0,-1);
     },
 
+    /**
+     * Creates this from the given config.
+     * @param  {String/String[]/Object/Object[]} groupBy
+     */
     decodeGroupBy: function(groupBy) {
-        if (groupBy.isGroupBy) {
-
-        } else {
-            if (!groupBy.fields) {
-                groupBy = {fields: groupBy};
-            }
-            var fields = groupBy.fields = Ext.isArray(groupBy.fields) ? groupBy.fields : [groupBy.fields],
-                field;
-            for (var i = 0; i < fields.length; i++) {
-                fields[i] = this.decodeField(fields[i]);
-            }
+        if (!groupBy.fields) {
+            groupBy = {fields: groupBy};
         }
-        return groupBy;
+        var fields = Ext.isArray(groupBy.fields) ? groupBy.fields : [groupBy.fields],
+            field;
+        for (var i = 0; i < fields.length; i++) {
+            fields[i] = this.decodeField(fields[i]);
+        }
+        this.setFields(fields);
     },
-
+    
+    /**
+     * Creates the {@link Ext.data.field.Field} from the given config.
+     * @param  {String/Object/Ext.data.field.Field} field
+     */
     decodeField: function(field) {
         if (!field.isField) {
             field = new Ext.data.field.Field(field);

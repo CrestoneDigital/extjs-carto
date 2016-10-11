@@ -20,7 +20,7 @@ Ext.define('CartoDb.LeafletFunctionsMixin', {
      * @param  {} num
      * @param  {} options
      */
-    setZoom: function(num, zoomOptions) {
+    setZoom: function(num, options) {
         this.getMap().setZoom(num, options);
     },
     
@@ -29,7 +29,7 @@ Ext.define('CartoDb.LeafletFunctionsMixin', {
      * @param  {} num
      * @param  {} options
      */
-    zoomIn: function(num, zoomOptions) {
+    zoomIn: function(num, options) {
         this.getMap().zoomIn(num, options);
     },
     
@@ -38,7 +38,7 @@ Ext.define('CartoDb.LeafletFunctionsMixin', {
      * @param  {} num
      * @param  {} options
      */
-    zoomOut: function(num, zoomOptions) {
+    zoomOut: function(num, options) {
         this.getMap().zoomOut(num, options);
     },
     

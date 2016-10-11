@@ -41,7 +41,7 @@ Ext.onReady(function () {
                 bind: {
                     selection: '{selectedValue}'
                 },
-                baseLayerName: 'Dark Matter (lite)',
+                basemap: 'darkMatterLite',
                 layerItems: [{
                   username: 'crestonedigital',
                   subLayers: [{

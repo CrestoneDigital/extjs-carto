@@ -3,21 +3,13 @@ Ext.define('CartoDb.CartoSqlMixin', {
     requires: [
         'CartoDb.CartoGroupBy'
     ],
-     
-     /**
-     * @param  {} table
-     */
-    sqlBuilder: function (table, params) {
-        var sql = 'Select * FROM ' + table + ' Where 1 = 1 ';
-        sql += this.whereClauseBuilder(params);
-        return sql;
-    },
 
-     /**
-     * @param  {} table
+    /**
+     * Builds the sql statement for Carto.
+     * @param  {Object} params
+     * @param  {Object} options
      */
-    sqlBuilder2_0: function (params, options) {
-        // debugger
+    sqlBuilder: function (params, options) {
         var fields,
             groupBy = this.getGroupBy();
         if (groupBy) {
@@ -38,15 +30,8 @@ Ext.define('CartoDb.CartoSqlMixin', {
         if (options && options.extraSelect) {
             fields += ',' + options.extraSelect.join(',');
         }
-
-        // var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' WHERE 1 = 1 ';
-        // sql += this.whereClauseBuilder2_0(params);
-        // sql += this.getFilter(params);
-        // sql += this.getBounds(params);
-        // sql += this.getOrder(params);
-        // sql += this.getPaging(params);
         var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' Where 1=1 ';
-        sql += this.whereClauseBuilder3_0(params.where);
+        sql += this.whereClauseBuilder(params.where);
         sql += this.getFilter(params);
         sql += this.getGroupByIfExists(groupBy);
         // sql += this.getBounds(params);
@@ -58,6 +43,10 @@ Ext.define('CartoDb.CartoSqlMixin', {
     getTablesSql: "SELECT CDB_UserTables('public') AS table_name",
     getColumnsSql: "SELECT column_name, CDB_ColumnType('{{table_name}}', column_name) AS column_type FROM CDB_ColumnNames('{{table_name}}') AS column_name",
 
+    /**
+     * Creates the filter sql to be applied to the WHERE clause.
+     * @param  {Object} params
+     */
     getFilter: function(params) {
         var str = '';
         var tmpAr = (typeof params.filter === 'string') ? Ext.JSON.decode(params.filter) : params.filter;
@@ -96,17 +85,20 @@ Ext.define('CartoDb.CartoSqlMixin', {
                         case 'in':
                             if(Ext.isArray(rec.value)) {
                                 var temp = rec.value.slice();
-                                for (var i = 0; i < temp.length; i++) temp[i] = this.wrap(temp[i]);
+                                for (var i = 0; i < temp.length; i++) temp[i] = this.wrapString(temp[i]);
                                 str += ' AND ARRAY[' + rec.property + '] <@ ARRAY[' + temp.join(',') + ']';
                             }
                             break;
-                            // return '1'
+                        default:
+                            console.warn("Unknown operator '" + operator + "'. Skipping.");
                     }
                 } else if (rec.property && rec.operator) {
                     switch (rec.operator) {
                         case 'notnull':
                             str += ' AND ' + rec.property + ' IS NOT NULL';
                             break;
+                        default:
+                            console.warn("Unknown operator '" + rec.operator + "'. Skipping.")
                     }
                 }
                 return '';
@@ -135,7 +127,6 @@ Ext.define('CartoDb.CartoSqlMixin', {
 
     getOrder: function(params) {
         var str = '';
-        // debugger
         var tmpAr = Ext.JSON.decode(params.sort);
         if (tmpAr && tmpAr.length > 0) {
             str += ' ORDER BY';
@@ -157,9 +148,14 @@ Ext.define('CartoDb.CartoSqlMixin', {
         return str; 
     },
 
-    whereClauseBuilder3_0: function(where, prefix) {
+    /**
+     * Builds the WHERE clause.
+     * @param  {Object} where - The config specifying the form of each WHERE statement.
+     * @param  {String} prefix - The table prefix to be prepended to each WHERE statement.
+     */
+    whereClauseBuilder: function(where, prefix) {
         var wheres = this.whereClauseLoop(where, prefix);
-        if (wheres.length > 0) {
+        if (wheres.length) {
             return ' AND ' + wheres.join(' AND ');
         } else {
             return '';
@@ -173,10 +169,10 @@ Ext.define('CartoDb.CartoSqlMixin', {
         for (var check in params) {
             if (!(obj = params[check])) continue;
             if (['string','number'].indexOf(typeof obj) > -1) {
-                wheres.push(pref + check + " = " + this.wrap(obj));
+                wheres.push(pref + check + " = " + this.wrapString(obj));
             } else if (obj instanceof Array && obj.length > 0) {
                 var temp = obj.slice();
-                for (var i = 0; i < temp.length; i++) temp[i] = this.wrap(temp[i]);
+                for (var i = 0; i < temp.length; i++) temp[i] = this.wrapString(temp[i]);
                 wheres.push("ARRAY[" + pref + check + "] <@ ARRAY[" + temp.join(",") + "]");
             } else if (obj.type) {
                 this.whereByType(wheres, check, obj, pref);
@@ -194,10 +190,10 @@ Ext.define('CartoDb.CartoSqlMixin', {
                 break;
             case 'range':
                 if (obj.start) {
-                    wheres.push(pref + check + ' >= ' + this.wrap(obj.start));
+                    wheres.push(pref + check + ' >= ' + this.wrapString(obj.start));
                 }
                 if (obj.end) {
-                    wheres.push(pref + check + ' <= ' + this.wrap(obj.end));
+                    wheres.push(pref + check + ' <= ' + this.wrapString(obj.end));
                 }
                 break;
             case 'bounds':
@@ -211,7 +207,7 @@ Ext.define('CartoDb.CartoSqlMixin', {
                 break;
         }
     },
-    wrap: function(obj) {
+    wrapString: function(obj) {
         return (typeof obj === 'string') ? "'" + obj + "'" : obj;
     },
     
@@ -221,48 +217,5 @@ Ext.define('CartoDb.CartoSqlMixin', {
 
     verifyOrderBy: function(){
         return true;
-    },
-
-    // createGroupBy: function(group) {
-    //     // if (!group || group.isGroupBy) {
-    //     //     return group;
-    //     // }
-    //     // if (typeof group === 'string' || Ext.isArray(group)) {
-    //     //     group = {fields: group};
-    //     // }
-    //     // var fields = group.fields = Ext.isArray(group.fields) ? group.fields : [group.fields],
-    //     //     field, selectSql = '', groupBySql = '';
-    //     // for (var i = 0; i < fields.length; i++) {
-    //     //     field = new Ext.data.field.Field(fields[i]);
-    //     //     if (!field.property) {
-    //     //         field.sql = this.wrapAggregate(field);
-    //     //     } else {
-    //     //         field.sql = this.wrapAggregate(field) + ' AS ' + field.name;
-    //     //     }
-    //     //     selectSql += field.sql + ',';
-    //     //     if (!field.aggregateType) {
-    //     //         groupBySql += field.name + ',';
-    //     //     }
-    //     //     fields[i] = field;
-    //     // }
-    //     // group.selectSql = selectSql.slice(0,-1);
-    //     // group.groupBySql = groupBySql.slice(0,-1);
-    //     // group.isGroupBy = true;
-    //     // return group;
-    // },
-
-    // wrapAggregate: function(field) {
-    //     if (field.aggregateType) {
-    //         field.aggregateType = field.aggregateType.toUpperCase();
-    //         if (this.allowedAggregateTypes.indexOf(field.aggregateType) === -1) {
-    //             console.warn("Unknown aggregate type '" + field.aggregateType + "'. Skipping.");
-    //             field.aggregateType = null;
-    //         } else {
-    //             return field.aggregateType + '(' + (field.property || field.name) + ')';
-    //         }
-    //     }
-    //     return field.property || field.name;
-    // },
-
-    // allowedAggregateTypes: ['AVG', 'SUM', 'COUNT', 'MIN', 'MAX', 'STDDEV']
+    }
 });

@@ -182,7 +182,7 @@ Ext.onReady(function () {
                 xtype: "cartoMap",
                 center: 'us',
                 reference: 'map',
-                baseLayerName: 'Dark Matter (lite)'
+                basemap: 'darkMatterLite'
             }],
             tbar: [{
                 xtype: 'combobox',

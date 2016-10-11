@@ -53,7 +53,7 @@ Ext.onReady(function () {
                 },
                 storesToLock: ['layer1'],
                 // selectedAction: 'panTo',
-                baseLayerName: 'Dark Matter (lite)',
+                basemap: 'darkMatterLite',
                 layerItems: [{
                   username: 'crestonedigital',
                   subLayers: [{

@@ -72,7 +72,7 @@ Ext.onReady(function () {
                 region: 'center',
                 center: 'us',
                 reference: 'map',
-                baseLayerName: 'Dark Matter (lite)',
+                basemap: 'darkMatterLite',
                 layerItems: [{
                     username: 'crestonedigital',
                     subLayers: [{

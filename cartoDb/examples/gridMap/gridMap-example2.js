@@ -37,7 +37,7 @@ Ext.onReady(function () {
                     selection: '{selectedValue}'
                 },
                 selectedAction: ['panTo','placeMarker'],
-                baseLayerName: 'Dark Matter (lite)',
+                basemap: 'darkMatterLite',
                 layerItems: [{
                   username: 'crestonedigital',
                   hidden: true,

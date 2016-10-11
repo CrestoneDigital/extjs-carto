@@ -5,6 +5,7 @@ Ext.require([
     'CartoDb.CartoMap',
     'CartoDb.CartoStore',
     'CartoDb.CartoProxy',
+    'CartoDb.CartoBasemaps',
     'Ext.data.Store'
 ]);
 var aboutHtml = ['<div class="about-style"><p>Data provided by <a href="http://wildfire.cr.usgs.gov/firehistory/index.html" target="_blank">The USGS Federal Fire Occurrence Website</a>.',
@@ -19,19 +20,29 @@ var columnsToIgnore  = ['cartodb_id', 'the_geom', 'the_geom_webmercator'];
 var numberTypes      = ['double precision', 'integer', 'number'];
 
 var mapController = Ext.create('Ext.app.ViewController',{
+    init: function() {
+        this.lookup('basemapBox').setStore(new Ext.data.Store({
+            data: CartoDb.CartoBasemaps.prototype.basemaps
+        }));
+    },
     initViewModel: function() {
         this.stores = [this.getStore('tables'), this.getStore('columns'), this.getStore('stats')];
         this.boxes  = [this.lookup('fieldBox'), this.lookup('sumBox'), this.lookup('avgBox'), this.lookup('minBox'), this.lookup('maxBox')];
     },
     reset: function(all) {
-        if (all) this.lookup('tableBox').clearValue();
+        if (all) {
+            this.lookup('tableBox').clearValue();
+            this.getStore('tables').removeAll();
+        }
         for (var i in this.boxes) {
             this.boxes[i].clearValue();
         }
         this.lookup('filtersView').removeAll();
+        this.filtersAdded = false;
         this.lookup('map').removeLayerAtIndex(0);
         this.lookup('cssOptions').setValue(simplePointCss);
         this.lookup('cssEditor').setValue(simplePointCss);
+        this.getStore('columns').removeAll();
         this.getStore('stats').removeAll();
         this.getStore('stats').getProxy().setGroupBy(null);
     },
@@ -41,12 +52,18 @@ var mapController = Ext.create('Ext.app.ViewController',{
         }
     },
     onSelectUsername: function(field, e) {
+        this.getStore('basemaps').setData(CartoDb.CartoBasemaps.prototype.basemaps);
         var value = field.getValue();
         if (value !== this.getViewModel().get('username')) {
             this.reset(true);
             this.setByStr('setUsername', value);
             this.getViewModel().set('username', value);
             this.getStore('tables').load();
+        }
+    },
+    catchError: function(store, records, successful) {
+        if (!successful) {
+            Ext.Msg.alert('Error', 'There was a problem loading your tables. Please check your username.', Ext.emptyFn);
         }
     },
     onSelectTable: function(combo, record) {
@@ -79,27 +96,30 @@ var mapController = Ext.create('Ext.app.ViewController',{
             table = this.getViewModel().get('table'),
             username = this.getViewModel().get('username'),
             column;
-        for (var i = 0; i < records.length; i++) {
-            column = records[i].get('column_name');
-            if (columnsToIgnore.indexOf(column) === -1) {
-                filtersView.add(Ext.create('Ext.form.field.Tag', {
-                    reference: 'carto-filter-' + i,
-                    fieldLabel: column,
-                    valueField: column,
-                    displayField: column,
-                    store: {
-                        type: 'CartoStore',
-                        sorters: column,
-                        proxy: {
-                            type: 'carto',
-                            table: table,
-                            username: username,
-                            groupBy: column,
-                            limit: 500
+        if (!this.filtersAdded) {
+            for (var i = 0; i < records.length; i++) {
+                column = records[i].get('column_name');
+                if (columnsToIgnore.indexOf(column) === -1) {
+                    filtersView.add(Ext.create('Ext.form.field.Tag', {
+                        reference: 'carto-filter-' + i,
+                        fieldLabel: column,
+                        valueField: column,
+                        displayField: column,
+                        store: {
+                            type: 'CartoStore',
+                            sorters: column,
+                            proxy: {
+                                type: 'carto',
+                                table: table,
+                                username: username,
+                                groupBy: column,
+                                limit: 500
+                            }
                         }
-                    }
-                }));
+                    }));
+                }
             }
+            this.filtersAdded = true;
         }
     },
     onApplyCss: function() {
@@ -153,6 +173,9 @@ Ext.onReady(function () {
                             type: 'carto',
                             mode: 'tables',
                             username: 'crestonedigital'
+                        },
+                        listeners: {
+                            load: 'catchError'
                         }
                     },
                     columns: {
@@ -220,11 +243,19 @@ Ext.onReady(function () {
                     xtype: "cartoMap",
                     center: 'us',
                     reference: 'map',
-                    baseLayerName: 'Dark Matter (lite)',
                     bind: {
+                        basemap: '{basemapBox.selection}',
                         mapLock: '{mapLock.checked}',
                     },
                     storesToLock: ['statsStore'],
+                }],
+                tbar: [{
+                    xtype: 'combobox',
+                    reference: 'basemapBox',
+                    width: 375,
+                    fieldLabel: 'Basemap',
+                    valueField: 'itemId',
+                    displayField: 'name'
                 }]
             }, {
                 xtype: 'tabpanel',

@@ -9,15 +9,14 @@ Ext.define('CartoDb.CartoMap', {
         'CartoDb.CartoProxy',
         'CartoDb.CountryCodesLatLongISO3166',
         'CartoDb.CartoStore',
-        'CartoDb.CartoBaseLayers'    
+        'CartoDb.CartoBasemaps'    
     ],
     config: {
 		map: null,
 		cartodb: null,
         defaultMapZoom: 4,
         scrollWheelZoom: true,
-        baseLayer: null,
-        baseLayerName: null,
+        basemap: null,
         bounds: null,
         zoom: null,
         minZoom: 3,
@@ -36,7 +35,7 @@ Ext.define('CartoDb.CartoMap', {
 
     publishes: [
         'bounds',
-        'baseLayer',
+        'basemap',
         'center',
         'zoom'
     ],
@@ -44,35 +43,28 @@ Ext.define('CartoDb.CartoMap', {
     twoWayBindable: [
         'selection'
     ],
-    
-    /**
-     * @param  {object} layerData - Contains the url and the attribution data for the base layer
-     */
-    applyBaseLayerName: function (layerName) {
-        var baseLayerData;
 
-        if(this.getMap() && this.getBaseLayer()){
-            this.getMap().removeLayer(this.getBaseLayer());
+    applyBasemap: function(basemap, oldBasemap) {
+        if (basemap && this.getMap()) {
+            if (typeof basemap === 'string') {
+                basemap = this.mixins['CartoDb.CartoBasemaps'].getBaseMap(basemap);
+            } else {
+                basemap = basemap.isModel ? basemap.getData() : basemap;
+            }
+            if (basemap && basemap.url) {
+                if (oldBasemap) {
+                    this.getMap().removeLayer(oldBasemap);
+                }
+                return L.tileLayer(basemap.url, {
+                    attribution: basemap.attribution,
+                    tms: basemap.tms || false
+                });
+            }
         }
-        if(typeof this.getBaseLayerName() === 'object' && this.getBaseLayerName() !== null){
-            baseLayerData = layerName;    
-        }else{
-            baseLayerData = this.mixins['CartoDb.CartoBaseLayers'].getBaseMap(layerName);
-        }
-        if(this.getMap()){
-            this.setBaseLayer(L.tileLayer(baseLayerData.url, {
-                attribution: baseLayerData.attribution,
-                tms: (baseLayerData.tms) ? baseLayerData.tms : false
-            }));
-        }
-        return layerName;
     },
 
-    applyBaseLayer: function (baseLayer) {
-        if(this.getMap() && this.getBaseLayer()){
-            this.getMap().removeLayer(baseLayer);
-        }
-        return baseLayer;
+    updateBasemap: function(basemap) {
+        basemap.addTo(this.getMap());
     },
 
     applySelection: function(record) {
@@ -102,23 +94,6 @@ Ext.define('CartoDb.CartoMap', {
             }
         }
     },
-    
-    // /**
-    //  * Called after the baseLayer has been set and the previous layer has been removed. 
-    //  * @param  {object} baseLayer
-    //  */
-    // updateBaseLayerName: function(baseLayer) {
-    //     debugger
-    //     this.setBaseLayer(baseLayer);
-	// 	baseLayer.addTo(this.getMap()).bringToBack();
-	// },
-
-    updateBaseLayer: function(baseLayer) {
-        // this.setBaseLayer(baseLayer);
-        if(baseLayer && this.getMap()){
-            baseLayer.addTo(this.getMap()).bringToBack();
-        }
-	},
 
     // applyBounds: function(data) {
     //     return data;
@@ -137,10 +112,6 @@ Ext.define('CartoDb.CartoMap', {
     //     return returnValue;
     // },
 
-     /**
-     * Called after the baseLayer has been set and the previous layer has been removed. 
-     * @param  {object} baseLayer
-     */
     // updateMapCenter: function(coordinates) {
     //     var map = this.getMap();
     //     if(map){
@@ -152,8 +123,7 @@ Ext.define('CartoDb.CartoMap', {
 	 * @param  {} eOpts
 	 */
 	afterRender: function(t, eOpts){
-        var baseLayer,
-            mapCenter = (typeof this.getCenter() === 'string') ? this.mixins['CartoDb.CountryCodesLatLongISO3166'].codes[this.getCenter()] : (Array.isArray(this.getCenter())) ? this.getCenter() : [0,0];
+        var mapCenter = (typeof this.getCenter() === 'string') ? this.mixins['CartoDb.CountryCodesLatLongISO3166'].codes[this.getCenter()] : (Array.isArray(this.getCenter())) ? this.getCenter() : [0,0];
         
         this.setMap(L.map(this.getId(), {
             scrollWheelZoom: this.getScrollWheelZoom(),
@@ -162,11 +132,8 @@ Ext.define('CartoDb.CartoMap', {
             minZoom:        this.getMinZoom(),
             maxZoom:        this.getMaxZoom()
         }));
-        if(!this.getBaseLayerName()){
-            this.setBaseLayerName('Positron (lite)');
-        }
-        if(!this.getBaseLayer()){
-            this.setBaseLayerName(this.getBaseLayerName());
+        if(!this.getBasemap()){
+            this.setBasemap('positronLite');
         }
         this.getMap().addEventListener('moveend', this.publishMapBounds, this);
         // this.getMap().addEventListener('zoomend', this.publishMapBounds, this);
@@ -208,18 +175,6 @@ Ext.define('CartoDb.CartoMap', {
 
     updateStoresByBounds: function() {
         if(this.storesToLock) {
-            // for(var i = 0; i < this.getStores().length; i++) {
-            //     if(this.storesToLock.indexOf(this.getStores()[i].getStoreId()) > -1) {
-            //         Ext.apply(this.getStores()[i].getProxy().getWhere(), {
-            //                     bounds: {
-            //                         type: 'bounds',
-            //                         bounds: this.getBounds()
-            //                     }
-            //                 }
-            //         );
-            //         this.getStores()[i].load();
-            //     }
-            // }
             var store;
             for(var i = 0; i < this.storesToLock.length; i++) {
                 if(store = Ext.getStore(this.storesToLock[i])) {
@@ -236,18 +191,6 @@ Ext.define('CartoDb.CartoMap', {
     },
 
     resetStores: function() {
-        // if(this.getStores()) {
-        //     for(var i = 0; i < this.getStores().length; i++) {
-        //         Ext.apply(this.getStores()[i].getProxy().getWhere(), {
-        //                     bounds: {
-        //                         type: 'bounds',
-        //                         bounds: null
-        //                     }
-        //                 }
-        //         )
-        //         this.getStores()[i].load();
-        //     }
-        // }
         if(this.storesToLock) {
             var store;
             for(var i = 0; i < this.storesToLock.length; i++) {
@@ -273,6 +216,11 @@ Ext.define('CartoDb.CartoMap', {
         }
     },
 
+    /**
+     * Adds a layer to the map.
+     * @param  {object} data
+     * @param  {function} callback
+     */
     addLayer: function(data, callback) {
         this.setStores(this.createDataStores(data));
         this.createLayer(data, function(err, layer){
@@ -284,6 +232,11 @@ Ext.define('CartoDb.CartoMap', {
         });
     },
 
+    /**
+     * Removes a layer from the map based on the layer's index.
+     * @param  {integer} index
+     * @param  {function} callback
+     */
     removeLayerAtIndex: function(index, callback) {
         var layer = this.getLayers()[index];
         if (layer) {
@@ -292,6 +245,11 @@ Ext.define('CartoDb.CartoMap', {
         }
     },
 
+    /**
+     * Creates the map layers based on the initial config.
+     * @param  {object} data
+     * @param  {function} cb
+     */
     createLayer: function(data, cb){
         var sublayers = [],
             dataStores = this.getStores();
@@ -341,6 +299,10 @@ Ext.define('CartoDb.CartoMap', {
 
     },
 
+    /**
+     * Creates the data stores associated with each sublayer.
+     * @param  {object} data
+     */
     createDataStores: function(data) {
         var storesArray = [];
         if (storesArray.length > 0) {
@@ -376,8 +338,6 @@ Ext.define('CartoDb.CartoMap', {
 
     featureClick: function(e, latLng, point, record){
         var featureData = this.getRecord(record.carto_store_id, record.cartodb_id);
-        // var dataModel = Ext.create('CartoDb.CartoDataModel', record);
-        // dataModel.internalId = dataModel.id;
         this.setSelection(featureData);
         this.fireEvent('recordClicked', this, this.getMap(), featureData, latLng, point, e)
     },
@@ -410,16 +370,6 @@ Ext.define('CartoDb.CartoMap', {
     },
 
     getRecord: function(storeId, cartodb_id) {
-        // var store, record;
-        // for(var i = 0; i < this.getStores().length; i++) {
-        //     store = this.getStores()[i];
-        //     for(var j = 0; j < store.getData().length; j++) {
-        //         record = store.getData().items[j];
-        //         if(record.data.cartodb_id === id) {
-        //             return record;
-        //         }
-        //     }
-        // }
         return Ext.getStore(storeId).findRecord('cartodb_id', cartodb_id);
     }
 
