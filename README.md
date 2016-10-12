@@ -22,6 +22,55 @@ Name | Type | Default | Description
 `stores` | [Ext.data.Store] | null | The stores associated with each subLayer of the `map`.
 `storesToLock` | String[] | null | An array of storeIds to be passed the `map`'s bounds when `mapLock` is true.
 
+#### Available Basemaps
+
+* positron
+* positronLite
+* positronLabelsBelow
+* darkMatter
+* darkMatterLite
+* darkMatterLabelsBelow
+* cartoWorldEco
+* cartoWorldFlatBlue
+* cartoWorldMidnightCommander
+* cartoAntique
+* toner
+* tonerLite
+* tonerLabelsBelow
+* tonerBackground
+* tonerLines
+* tonerHybrid
+* watercolor
+
+##### Example Usage
+
+```javascript
+{
+    xtype: 'cartoMap',
+    basemap: 'darkMatterLite'
+}
+```
+
+#### Available Selected Actions
+
+* placeMarker
+* panTo
+
+##### Example Usage
+
+```javascript
+{
+    xtype: 'cartoMap',
+    selectedAction: 'panTo'
+}
+```
+
+```javascript
+{
+    xtype: 'cartoMap',
+    selectedAction: ['panTo', 'placeMarker']
+}
+```
 
 ## CartoStore.js
 

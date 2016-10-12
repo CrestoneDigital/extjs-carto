@@ -87,7 +87,7 @@ Ext.define('CartoDb.CartoBasemaps',{
         url: 'https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.png',
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://cartodb.com/attributions">CartoDB</a>'
     }],
-    getBaseMap: function(itemId){
+    getBasemapById: function(itemId){
         var basemap = null;
         this.basemaps.forEach(function(item){
             if(item.itemId === itemId){

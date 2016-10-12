@@ -122,9 +122,9 @@ Ext.define('CartoDb.CartoMap', {
     ],
 
     applyBasemap: function(basemap, oldBasemap) {
-        if (basemap && this.getMap()) {
+        if (basemap) {
             if (typeof basemap === 'string') {
-                basemap = this.mixins['CartoDb.CartoBasemaps'].getBaseMap(basemap);
+                basemap = this.mixins['CartoDb.CartoBasemaps'].getBasemapById(basemap);
             } else {
                 basemap = basemap.isModel ? basemap.getData() : basemap;
             }
@@ -141,7 +141,9 @@ Ext.define('CartoDb.CartoMap', {
     },
 
     updateBasemap: function(basemap) {
-        basemap.addTo(this.getMap()).bringToBack();
+        if (this.getMap()) {
+            basemap.addTo(this.getMap()).bringToBack();
+        }
     },
 
     applySelection: function(record) {
@@ -211,6 +213,8 @@ Ext.define('CartoDb.CartoMap', {
         }));
         if(!this.getBasemap()){
             this.setBasemap('positronLite');
+        } else {
+            this.getBasemap().addTo(this.getMap()).bringToBack();
         }
         this.getMap().addEventListener('moveend', this.publishMapBounds, this);
         // this.getMap().addEventListener('zoomend', this.publishMapBounds, this);
