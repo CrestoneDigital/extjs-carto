@@ -22,6 +22,39 @@ Name | Type | Default | Description
 `stores` | [Ext.data.Store] | null | The stores associated with each subLayer of the `map`.
 `storesToLock` | String[] | null | An array of storeIds to be passed the `map`'s bounds when `mapLock` is true.
 
+### Binding
+
+The `map`'s selection is two-way bindable, similarly to other Extjs components. This means it plays well with things like `grid`s.
+
+#### Example
+
+```javascript
+{
+    xtype: 'grid',
+    bind: {
+        selection: '{selectedItem}'
+    },
+    listeners: {
+        afterrender: function(){
+            this.setStore(Ext.getStore('layer1'));
+        }
+    }
+}, {
+    xtype: 'cartoMap',
+    bind: {
+        selection: '{selectedItem}'
+    },
+    basemap: 'darkMatterLite',
+    layers: [{
+        username: 'example_username',
+        subLayers: [{
+            storeId: 'layer1',
+            table: 'example_table'
+        }]
+    }]
+}
+```
+
 #### Available Basemaps
 
 * positron
