@@ -9,24 +9,101 @@ Ext.define('CartoDb.CartoMap', {
         'CartoDb.CartoProxy',
         'CartoDb.CountryCodesLatLongISO3166',
         'CartoDb.CartoStore',
-        'CartoDb.CartoBasemaps'    
+        'CartoDb.CartoBasemaps'
     ],
     config: {
+        /**
+         * @cfg {L.map} map
+         * 
+         * The leaflet map for this component.
+         */
 		map: null,
-		cartodb: null,
+
+        /**
+         * @cfg {Number} defaultMapZoom
+         * 
+         * The default zoom level of the `map`.
+         */
         defaultMapZoom: 4,
+
+        /**
+         * @cfg {Boolean} scrollWheelZoom
+         * 
+         * `true` to allow the map to be scrolled by the mouse wheel.
+         */
         scrollWheelZoom: true,
+
+        /**
+         * @cfg {String/Object/L.tileLayer} basemap
+         * 
+         * The basemap to be used for the `map`.
+         */
         basemap: null,
+
+        /**
+         * @cfg {LatLngBounds} bounds
+         * 
+         * The bounds of the `map`.
+         */
         bounds: null,
-        zoom: null,
+
+        /**
+         * @cfg {Number} minZoom
+         * 
+         * The minimum possible zoom level of the `map`.
+         */
         minZoom: 3,
+
+        /**
+         * @cfg {Number} maxZoom
+         * 
+         * The maximum possible zoom level of the `map`.
+         */
         maxZoom: 18,
+
+        /**
+         * @cfg {Boolean} mapLock
+         * 
+         * `true` for the map to update the filters in every store found in `storesToLock` when 
+         * the `map` bounds change.
+         */
         mapLock: false,
-        layerItems: [],
+
+        /**
+         * @cfg {Object[]} layers
+         * 
+         * Objects defining the layers of the `map`.
+         */
         layers: [],
+
+        /**
+         * @cfg {Ext.data.Model} selection
+         * 
+         * The selected record of the `map`.
+         */
         selection: null,
-        selectedAction: undefined,
-        stores: null
+
+        /**
+         * @cfg {String/String[]} selectedAction
+         * 
+         * The actions to take when a record is selected.
+         */
+        selectedAction: null,
+
+        /**
+         * @cfg {Ext.data.Store[]} stores
+         * 
+         * The stores associated with each subLayer of the `map`.
+         */
+        stores: null,
+
+        /**
+         * @cfg {String[]} storesToLock
+         * 
+         * An array of storeIds to be passed the `map`'s bounds when `mapLock` is true.
+         * Note that each store's proxy must be of type `carto`.
+         */
+        storesToLock: null
 	},
     
     renderConfig: {
@@ -64,7 +141,7 @@ Ext.define('CartoDb.CartoMap', {
     },
 
     updateBasemap: function(basemap) {
-        basemap.addTo(this.getMap());
+        basemap.addTo(this.getMap()).bringToBack();
     },
 
     applySelection: function(record) {
@@ -141,7 +218,7 @@ Ext.define('CartoDb.CartoMap', {
             this.fireEvent('mapClicked', this, this.getMap(), e);
         }, this);
         this.fireEvent('mapLoaded');
-        var initialLayers = this.getLayerItems();
+        var initialLayers = this.getLayers();
         if(initialLayers.length > 0){
             initialLayers.forEach(function(item, index){
                 this.addLayer(item, function(err, layer){
@@ -163,7 +240,11 @@ Ext.define('CartoDb.CartoMap', {
 	onResize: function(w, h, oW, oH){
 		this.getMap().invalidateSize();
 	},
-
+    
+    /**
+     * Publishes the map's bounds to the viewModel, and updates the stores that are locked to the map.
+     * @param  {Event} event
+     */
     publishMapBounds: function(event){
         this.setBounds((event) ? event.target.getBounds() : this.getMap().getBounds());
         var center = (event) ? event.target.getCenter() : this.getMap().getCenter();
@@ -173,11 +254,16 @@ Ext.define('CartoDb.CartoMap', {
         }
     },
 
+    /**
+     * Adds the map's bounds into each store that is locked to the map.
+     * 
+     * Note that only stores with a `carto` proxy can lock to a CartoMap.
+     */
     updateStoresByBounds: function() {
-        if(this.storesToLock) {
+        if(this.getStoresToLock()) {
             var store;
-            for(var i = 0; i < this.storesToLock.length; i++) {
-                if(store = Ext.getStore(this.storesToLock[i])) {
+            for(var i = 0; i < this.getStoresToLock().length; i++) {
+                if(store = Ext.getStore(this.getStoresToLock()[i])) {
                     Ext.apply(store.getProxy().getWhere(), {
                         bounds: {
                             type: 'bounds',
@@ -189,12 +275,15 @@ Ext.define('CartoDb.CartoMap', {
             }
         }
     },
-
+    
+    /**
+     * Removes the map's bounds from each store that is locked to the map.
+     */
     resetStores: function() {
-        if(this.storesToLock) {
+        if(this.getStoresToLock()) {
             var store;
-            for(var i = 0; i < this.storesToLock.length; i++) {
-                if(store = Ext.getStore(this.storesToLock[i])) {
+            for(var i = 0; i < this.getStoresToLock().length; i++) {
+                if(store = Ext.getStore(this.getStoresToLock()[i])) {
                     Ext.apply(store.getProxy().getWhere(), {
                         bounds: {
                             type: 'bounds',
@@ -207,8 +296,7 @@ Ext.define('CartoDb.CartoMap', {
         }
     },
 
-    setMapLock: function(mapLock) {
-        this.mapLock = mapLock;
+    updateMapLock: function(mapLock) {
         if(mapLock) {
             this.updateStoresByBounds();
         } else {
@@ -233,6 +321,19 @@ Ext.define('CartoDb.CartoMap', {
     },
 
     /**
+     * Removes a subLayer from the map based on the subLayer's storeId.
+     * @param  {} storeId
+     */
+    removeSubLayer: function(storeId) {
+        if (typeof storeId === 'string') {
+            var store = Ext.getStore(storeId);
+            if (store) {
+                store.destroy();
+            }
+        }
+    },
+
+    /**
      * Removes a layer from the map based on the layer's index.
      * @param  {integer} index
      * @param  {function} callback
@@ -251,16 +352,16 @@ Ext.define('CartoDb.CartoMap', {
      * @param  {function} cb
      */
     createLayer: function(data, cb){
-        var sublayers = [],
+        var subLayers = [],
             dataStores = this.getStores();
         dataStores.forEach(function(item, index){
-            var sublayer = {sql: item.getCartoSql(true), cartocss: item.getCartoCSS()};
-            sublayers.push(sublayer);
-        }.bind(this)); 
+            var subLayer = {sql: item.getCartoSql(true), cartocss: item.getCartoCSS()};
+            subLayers.push(subLayer);
+        }.bind(this));
         cartodb.createLayer(this.getMap(), {
             user_name: data.username,
             type: 'cartodb',
-            sublayers: sublayers
+            sublayers: subLayers
         })
         .done(function (layer) {
             this.getLayers().push(layer);
@@ -271,24 +372,24 @@ Ext.define('CartoDb.CartoMap', {
                 layer.getSubLayer(i).store = dataStores[i];
                 dataStores[i]._subLayer = layer.getSubLayer(i);
                 if(dataStores[i].interactivity){
-                    var sublayer = layer.getSubLayer(i);
-                    sublayer.setInteraction(dataStores[i].interactivity.enable);
-                    sublayer.set({
+                    var subLayer = layer.getSubLayer(i);
+                    subLayer.setInteraction(dataStores[i].interactivity.enable);
+                    subLayer.set({
                         interactivity: 'carto_store_id,cartodb_id' + ((dataStores[i].interactivity.fields) ? ',' + dataStores[i].interactivity.fields.join(',') : '')
                     });
                     var tooltip = dataStores[i].interactivity.tooltip;
                     if(tooltip && tooltip.enable){
                         this.getMap().viz.addOverlay({
                             type: 'tooltip',
-                            layer: sublayer,
+                            layer: subLayer,
                             template: tooltip.html || this.createDefaultTooltip(tooltip.fields || dataStores[i].interactivity.fields, tooltip.mood),
                             position: tooltip.position || 'bottom|right',
                             fields: [this.createFields(dataStores[i].interactivity.fields)]
                         });
                     }
-                    sublayer.on('featureClick', this.featureClick.bind(this));
-                    sublayer.on('featureOver', this.featureOver.bind(this));
-                    sublayer.on('featureOut', this.featureOut.bind(this));
+                    subLayer.on('featureClick', this.featureClick.bind(this));
+                    subLayer.on('featureOver', this.featureOver.bind(this));
+                    subLayer.on('featureOut', this.featureOut.bind(this));
                 }
             }
             cb(null, layer);
@@ -300,7 +401,7 @@ Ext.define('CartoDb.CartoMap', {
     },
 
     /**
-     * Creates the data stores associated with each sublayer.
+     * Creates the data stores associated with each subLayer.
      * @param  {object} data
      */
     createDataStores: function(data) {
@@ -317,11 +418,9 @@ Ext.define('CartoDb.CartoMap', {
             var username = (data.username) ? data.username : this.getUsername();
             var store = Ext.create("CartoDb.CartoStore",{
                     storeId: storeId,
-                    _sublayer: null,
+                    _subLayer: null,
                     style: item.style,
-                    // mapLock: item.mapLock,
                     proxy: {
-                        type: 'carto',
                         username: username,
                         enableLatLng: item.enableLatLng || false,
                         table: item.table
@@ -337,9 +436,9 @@ Ext.define('CartoDb.CartoMap', {
     },
 
     featureClick: function(e, latLng, point, record){
-        var featureData = this.getRecord(record.carto_store_id, record.cartodb_id);
-        this.setSelection(featureData);
-        this.fireEvent('recordClicked', this, this.getMap(), featureData, latLng, point, e)
+        var selection = this.getRecord(record.carto_store_id, record.cartodb_id);
+        this.setSelection(selection);
+        this.fireEvent('select', this, this.getMap(), selection, latLng, point, e);
     },
 
     featureOver: function() {
@@ -353,6 +452,10 @@ Ext.define('CartoDb.CartoMap', {
         $('.leaflet-container').css('cursor',this._cursor);
     },
 
+    /**
+     * @param  {String[]} fields
+     * @param  {String} mood - Can be either 'dark' or 'light'.
+     */
     createDefaultTooltip: function(fields, mood) {
         var html = '<div class="cartodb-tooltip-content-wrapper ' + (mood || 'light') + '"><div class="cartodb-tooltip-content">';
         for(var i = 0; i < fields.length; i++){

@@ -92,7 +92,6 @@ var mapController = Ext.create('Ext.app.ViewController',{
         var totalsStore = Ext.create('CartoDb.CartoStore', {
             storeId: 'totalsStore',
             proxy: {
-                type: 'carto',
                 table: 'wildfire',
                 username: 'crestonedigital',
                 groupBy: 'cause'
@@ -182,7 +181,7 @@ Ext.onReady(function () {
                         mapLock: '{mapLock.checked}',
                     },
                     storesToLock: ['firesStats', 'totalsStore'],
-                    layerItems: [{
+                    layers: [{
                         username: 'crestonedigital',
                         subLayers: [{
                             storeId: 'layer1',
@@ -307,7 +306,6 @@ Ext.onReady(function () {
                             direction: 'desc'
                         },
                         proxy: {
-                            type: 'carto',
                             table: 'wildfire',
                             username: 'crestonedigital',
                             groupBy: [{
@@ -402,7 +400,6 @@ Ext.onReady(function () {
                             storeId: 'statesStore',
                             sorters: 'state',
                             proxy: {
-                                type: 'carto',
                                 table: 'wildfire',
                                 username: 'crestonedigital',
                                 groupBy: 'state'
@@ -418,7 +415,6 @@ Ext.onReady(function () {
                             storeId: 'sizeStore',
                             sorters: 'sizeclass',
                             proxy: {
-                                type: 'carto',
                                 table: 'wildfire',
                                 username: 'crestonedigital',
                                 groupBy: 'sizeclass'
@@ -434,7 +430,6 @@ Ext.onReady(function () {
                             storeId: 'fireTypeStore',
                             sorters: 'firetype',
                             proxy: {
-                                type: 'carto',
                                 table: 'wildfire',
                                 username: 'crestonedigital',
                                 groupBy: 'firetype'
@@ -450,7 +445,6 @@ Ext.onReady(function () {
                             storeId: 'protectionTypeStore',
                             sorters: 'protection',
                             proxy: {
-                                type: 'carto',
                                 table: 'wildfire',
                                 username: 'crestonedigital',
                                 groupBy: 'protection'
@@ -466,7 +460,6 @@ Ext.onReady(function () {
                             storeId: 'specificCauseStore',
                             sorters: 'speccause',
                             proxy: {
-                                type: 'carto',
                                 table: 'wildfire',
                                 username: 'crestonedigital',
                                 groupBy: 'speccause'
@@ -482,7 +475,6 @@ Ext.onReady(function () {
                             storeId: 'statisticalCauseStore',
                             sorters: 'statcause',
                             proxy: {
-                                type: 'carto',
                                 table: 'wildfire',
                                 username: 'crestonedigital',
                                 groupBy: 'statcause'
@@ -498,7 +490,6 @@ Ext.onReady(function () {
                             storeId: 'yearStore',
                             sorters: 'year_',
                             proxy: {
-                                type: 'carto',
                                 table: 'wildfire',
                                 username: 'crestonedigital',
                                 groupBy: 'year_'

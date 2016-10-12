@@ -14,15 +14,19 @@ Ext.define('CartoDb.CartoStore',{
             storeConfig.filter = [];
             filters.forEach(function(item){
                 storeConfig.filter.push({
-                        operator: (item._operator) ? item._operator : "like", 
-                        value: (item._convert) ? item._value.toLocaleDateString() :item._value, 
-                        property: item._property
-                    });
+                    operator: (item._operator) ? item._operator : "like", 
+                    value: (item._convert) ? item._value.toLocaleDateString() :item._value, 
+                    property: item._property
+                });
             }.bind(this));
             if(this._subLayer){
                 this._subLayer.setSQL(this.sqlBuilder(storeConfig));
             }
         }
+    },
+
+    proxy: {
+        type: 'carto'
     },
     
     remoteFilter: true,
@@ -127,5 +131,11 @@ Ext.define('CartoDb.CartoStore',{
                 "}"].join(' ');
         }
         return css;
+    },
+    destroy: function() {
+        var subLayer = this.getSubLayer();
+        subLayer.store = null;
+        subLayer.remove();
+        this.callParent();
     }
 });

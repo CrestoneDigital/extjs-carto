@@ -69,7 +69,7 @@ Ext.onReady(function () {
                 center: 'us',
                 reference: 'map',
                 basemap: 'darkMatterLite',
-                layerItems: [{
+                layers: [{
                     username: 'crestonedigital',
                     subLayers: [{
                         storeId: 'layer1',

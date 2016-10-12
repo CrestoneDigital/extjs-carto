@@ -17,7 +17,7 @@ Ext.onReady(function () {
         items: [{
             xtype: "cartoMap",
             center: 'us',
-            layerItems: [{
+            layers: [{
                   username: 'crestonedigital',
                   subLayers: [{
                       storeId: 'layer1',

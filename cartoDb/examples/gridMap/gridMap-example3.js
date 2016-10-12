@@ -54,7 +54,7 @@ Ext.onReady(function () {
                 storesToLock: ['layer1'],
                 // selectedAction: 'panTo',
                 basemap: 'darkMatterLite',
-                layerItems: [{
+                layers: [{
                   username: 'crestonedigital',
                   subLayers: [{
                       storeId: 'layer1',

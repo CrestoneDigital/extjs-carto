@@ -39,7 +39,7 @@ var mapController = Ext.create('Ext.app.ViewController',{
         }
         this.lookup('filtersView').removeAll();
         this.filtersAdded = false;
-        this.lookup('map').removeLayerAtIndex(0);
+        this.lookup('map').removeSubLayer('layer1');
         this.lookup('cssOptions').setValue(simplePointCss);
         this.lookup('cssEditor').setValue(simplePointCss);
         this.getStore('columns').removeAll();
@@ -52,7 +52,6 @@ var mapController = Ext.create('Ext.app.ViewController',{
         }
     },
     onSelectUsername: function(field, e) {
-        this.getStore('basemaps').setData(CartoDb.CartoBasemaps.prototype.basemaps);
         var value = field.getValue();
         if (value !== this.getViewModel().get('username')) {
             this.reset(true);
@@ -109,7 +108,6 @@ var mapController = Ext.create('Ext.app.ViewController',{
                             type: 'CartoStore',
                             sorters: column,
                             proxy: {
-                                type: 'carto',
                                 table: table,
                                 username: username,
                                 groupBy: column,
@@ -124,6 +122,9 @@ var mapController = Ext.create('Ext.app.ViewController',{
     },
     onApplyCss: function() {
         Ext.getStore('layer1').getSubLayer().setCartoCSS(this.lookup('cssEditor').getValue());
+    },
+    onToggleCss: function(seg, button) {
+        Ext.getStore('layer1').getSubLayer().setCartoCSS(button.value);
     },
     onAbout: function() {
         Ext.create('Ext.window.Window', {
@@ -180,6 +181,7 @@ Ext.onReady(function () {
                     },
                     columns: {
                         storeId: 'columnsStore',
+                        sorters: 'column_name',
                         proxy: {
                             type: 'carto',
                             username: 'crestonedigital',
@@ -212,7 +214,6 @@ Ext.onReady(function () {
                             }
                         },
                         proxy: {
-                            type: 'carto',
                             username: 'crestonedigital',
                             reader: {
                                 transform: function(data) {
@@ -296,7 +297,10 @@ Ext.onReady(function () {
                         }, {
                             text: 'Polygon',
                             value: simplePolygonCss
-                        }]
+                        }],
+                        listeners: {
+                            toggle: 'onToggleCss'
+                        }
                     }, '->'],
                     items: [{
                         xtype: 'textareafield',

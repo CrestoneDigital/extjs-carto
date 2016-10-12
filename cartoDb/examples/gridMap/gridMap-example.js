@@ -42,7 +42,7 @@ Ext.onReady(function () {
                     selection: '{selectedValue}'
                 },
                 basemap: 'darkMatterLite',
-                layerItems: [{
+                layers: [{
                   username: 'crestonedigital',
                   subLayers: [{
                       storeId: 'layer1',
