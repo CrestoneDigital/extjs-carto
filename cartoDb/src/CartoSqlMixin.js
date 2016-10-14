@@ -31,7 +31,7 @@ Ext.define('CartoDb.CartoSqlMixin', {
             fields += ',' + options.extraSelect.join(',');
         }
         var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' Where 1=1 ';
-        sql += this.whereClauseBuilder(params.where);
+        sql += (options && options.isMap) ? '' : this.whereClauseBuilder(params.where);
         sql += this.getFilter(params);
         sql += this.getGroupByIfExists(groupBy);
         // sql += this.getBounds(params);

@@ -15,13 +15,6 @@ var mapController = Ext.create('Ext.app.ViewController',{
 });
 
 
-var mapViewModel = Ext.create('Ext.app.ViewModel',{
-    data: {
-        lockToMap: true
-    }
-});
-
-
 Ext.onReady(function () {
     Ext.QuickTips.init();
 
@@ -30,48 +23,52 @@ Ext.onReady(function () {
         items: [{
             xtype: 'panel',
             layout: 'border',
-            viewModel: mapViewModel,
+            viewModel: {
+                stores: {
+                    layer: {
+                        storeId: 'layer1',
+                        type: 'carto',
+                        autoLoad: true,
+                        proxy: {
+                            enableLatLng: true,
+                            username: 'crestonedigital',
+                            table: 'petroleum_refineries'
+                        }
+                    }
+                }
+            },
             controller: mapController,
             tbar: {
                 items: {
                     xtype: 'checkboxfield',
                     reference: 'lockToMapBox',
-                    boxLabel: 'Lock to Map',
-                    bind: {
-                        value: '{lockToMap}'
-                    }
+                    boxLabel: 'Lock to Map'
                 }
             },
             items: [{
-                xtype: "cartoMap",
+                xtype: "cartomap",
                 region: 'center',
                 center: 'us',
                 reference: 'map',
                 bind: {
                     selection: '{selectedValue}',
-                    mapLock: '{lockToMap}'
+                    mapLock: '{lockToMapBox.checked}'
                 },
                 storesToLock: ['layer1'],
-                // selectedAction: 'panTo',
                 basemap: 'darkMatterLite',
                 layers: [{
-                  username: 'crestonedigital',
-                  subLayers: [{
-                      storeId: 'layer1',
-                      enableLatLng: true,
-                      table: 'petroleum_refineries',
-                      autoLoad: true,
-                      interactivity: {
-                          enable: true,
-                          fields: [
-                              'site_name', 'company', 'state', 'total_oper'
-                          ],
-                          tooltip: {
-                              enable: true
-                          }
-                      }
-                  }]
-
+                    subLayers: [{
+                        bind: '{layer}',
+                        interactivity: {
+                            enable: true,
+                            fields: [
+                                'site_name', 'company', 'state', 'total_oper'
+                            ],
+                            tooltip: {
+                                enable: true
+                            }
+                        }
+                    }]
                 }]
             },{
                 xtype: 'grid',
@@ -80,12 +77,10 @@ Ext.onReady(function () {
                 split: true,
                 idProperty: 'cartodb_id',
                 bind: {
-                    selection: '{selectedValue}'
+                    selection: '{selectedValue}',
+                    store: '{layer}'
                 },
                 listeners: {
-                    afterrender: function(){
-                        this.setStore(Ext.getStore('layer1'));
-                    },
                     select: 'onSelect'
                 },
                 height: 350,

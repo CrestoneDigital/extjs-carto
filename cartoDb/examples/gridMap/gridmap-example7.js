@@ -12,7 +12,7 @@ var mapController = Ext.create('Ext.app.ViewController',{
     filterStore: function(combo, record){
         Ext.getStore('layer1').filter([{
             property: 'case_status',
-            value: record.data.value,
+            value: record.get('value'),
             operator: 'like'
         }]);
     },
@@ -22,12 +22,6 @@ var mapController = Ext.create('Ext.app.ViewController',{
     }
 });
 
-
-var mapViewModel = Ext.create('Ext.app.ViewModel',{
-
-});
-
-
 Ext.onReady(function () {
     Ext.QuickTips.init();
 
@@ -36,7 +30,38 @@ Ext.onReady(function () {
         items: [{
             xtype: 'panel',
             layout: 'border',
-            viewModel: mapViewModel,
+            viewModel: {
+                stores: {
+                    layer: {
+                        storeId: 'layer1',
+                        type: 'carto',
+                        autoLoad: true,
+                        proxy: {
+                            username: 'crestonedigital',
+                            table: 'denver_service_requests',
+                            reader: {
+                                transform: {
+                                    fn: function(data) {
+                                        data.rows.forEach(function(item){
+                                            item.timestamp = new Date(item.timestamp/1000000);
+                                        }.bind(this));
+                                        return data;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    combo: {
+                        data: [{
+                            name: 'Open',
+                            value: 'Open'
+                        },{
+                            name: 'Closed',
+                            value: 'Closed'
+                        }]
+                    }
+                }
+            },
             controller: mapController,
             dockedItems: [{
                 xtype: 'toolbar',
@@ -45,19 +70,13 @@ Ext.onReady(function () {
                     text: 'View Code',
                 },{
                     xtype: 'combo',
-                    fieldLabel: "Sentiment Filter",
+                    fieldLabel: "Case Filter",
                     reference: 'comboFilter',
                     displayField: 'name',
                     valueField: 'value',
-                    store: Ext.create('Ext.data.Store', {
-                        data: [{
-                            name: 'Open',
-                            value: 'Open'
-                        },{
-                            name: 'Closed',
-                            value: 'Closed'
-                        }]
-                    }),
+                    bind: {
+                        store: '{combo}'
+                    },
                     listeners: {
                         select: 'filterStore'
                     }
@@ -68,30 +87,18 @@ Ext.onReady(function () {
                 }]
             }],            
             items: [{
-                xtype: "cartoMap",
+                xtype: "cartomap",
                 region: 'center',
                 center: 'us',
                 reference: 'map',
                 basemap: 'darkMatterLite',
                 layers: [{
-                    username: 'crestonedigital',
                     subLayers: [{
-                        storeId: 'layer1',
-                        table: 'denver_service_requests',
-                        autoLoad: true,
+                        bind: '{layer}',
                         style: {
                           type: 'intensity'
-                        },
-                        transform: {
-                            fn: function(data) {
-                                data.rows.forEach(function(item){
-                                    item.timestamp = new Date(item.timestamp/1000000);
-                                }.bind(this));
-                                return data;
-                            }
                         }
-                  }]
-
+                    }]
                 }]
             },{
                 xtype: 'grid',
@@ -100,12 +107,9 @@ Ext.onReady(function () {
                 split: true,
                 height: 350,
                 plugins: 'gridfilters',
-                listeners: {
-                    afterrender: function(){
-                        this.setStore(Ext.getStore('layer1'));
-                    }
+                bind: {
+                    store: '{layer}'
                 },
-                // store: Ext.getStore('layer1'),
                 columns: [{ 
                     text: 'Agency', 
                     dataIndex: 'agency', 

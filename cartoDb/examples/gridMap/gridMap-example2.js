@@ -6,18 +6,6 @@ Ext.require([
     'Ext.data.Store'
 ]);
 
-
-
-var mapController = Ext.create('Ext.app.ViewController',{
-    
-});
-
-
-var mapViewModel = Ext.create('Ext.app.ViewModel',{
-
-});
-
-
 Ext.onReady(function () {
     Ext.QuickTips.init();
 
@@ -26,10 +14,21 @@ Ext.onReady(function () {
         items: [{
             xtype: 'panel',
             layout: 'border',
-            viewModel: mapViewModel,
-            controller: mapController,
+            viewModel: {
+                stores: {
+                    layer: {
+                        type: 'carto',
+                        autoLoad: true,
+                        proxy: {
+                            enableLatLng: true,
+                            username: 'crestonedigital',
+                            table: 'petroleum_refineries'
+                        }
+                    }
+                }
+            },
             items: [{
-                xtype: "cartoMap",
+                xtype: "cartomap",
                 region: 'center',
                 center: 'us',
                 reference: 'map',
@@ -39,13 +38,9 @@ Ext.onReady(function () {
                 selectedAction: ['panTo','placeMarker'],
                 basemap: 'darkMatterLite',
                 layers: [{
-                  username: 'crestonedigital',
                   hidden: true,
                   subLayers: [{
-                      storeId: 'layer1',
-                      enableLatLng: true,
-                      table: 'petroleum_refineries',
-                      autoLoad: true,
+                      bind: '{layer}',
                       interactivity: {
                           enable: true,
                           fields: [
@@ -62,12 +57,8 @@ Ext.onReady(function () {
                 split: true,
                 idProperty: 'cartodb_id',
                 bind: {
-                    selection: '{selectedValue}'
-                },
-                listeners: {
-                    afterrender: function(){
-                        this.setStore(Ext.getStore('layer1'));
-                    }
+                    selection: '{selectedValue}',
+                    store: '{layer}'
                 },
                 height: 350,
                 columns: [{

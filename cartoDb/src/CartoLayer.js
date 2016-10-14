@@ -7,6 +7,7 @@ Ext.define('CartoDb.CartoLayer', {
     config: {
         map: null,
         cartoLayer: null,
+        hidden: false,
         username: '',
         subLayers: []
     },
@@ -36,6 +37,9 @@ Ext.define('CartoDb.CartoLayer', {
 
     setCartoLayer: function(cartoLayer) {
         this.callParent(arguments);
+        if (this.getHidden()) {
+            cartoLayer.hide();
+        }
         var subLayers = this.getSubLayers();
         for (var i = 0; i < subLayers.length; i++) {
             subLayers[i].setCartoSubLayer(cartoLayer.getSubLayer(i));

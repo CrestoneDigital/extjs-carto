@@ -10,23 +10,21 @@ Ext.require([
 
 var mapController = Ext.create('Ext.app.ViewController',{
     filterStore: function(combo, record){
-        Ext.getStore('layer1').filter([{
-            property: 'city',
-            value: record.data.value,
-            operator: 'like'
-        }]);
+        if (record) {
+            this.getStore('layer').filter([{
+                property: 'city',
+                value: record,
+                operator: 'like'
+            }]);
+        } else {
+            this.clearFilter();
+        }
     },
     clearFilter: function(){
         this.lookup('comboFilter').reset();
-        Ext.getStore('layer1').clearFilter();
+        this.getStore('layer').clearFilter();
     }
 });
-
-
-var mapViewModel = Ext.create('Ext.app.ViewModel',{
-
-});
-
 
 Ext.onReady(function () {
     Ext.QuickTips.init();
@@ -36,7 +34,28 @@ Ext.onReady(function () {
         items: [{
             xtype: 'panel',
             layout: 'border',
-            viewModel: mapViewModel,
+            viewModel: {
+                stores: {
+                    layer: {
+                        storeId: 'layer1',
+                        type: 'carto',
+                        autoLoad: true,
+                        proxy: {
+                            username: 'crestonedigital',
+                            table: 'us_metro_stations'
+                        }
+                    },
+                    combo: {
+                        type: 'carto',
+                        sorters: 'city',
+                        proxy: {
+                            username: 'crestonedigital',
+                            table: 'us_metro_stations',
+                            groupBy: 'city'
+                        }
+                    }
+                }
+            },
             controller: mapController,
             dockedItems: [{
                 xtype: 'toolbar',
@@ -47,19 +66,13 @@ Ext.onReady(function () {
                     xtype: 'combo',
                     fieldLabel: "City Filters",
                     reference: 'comboFilter',
-                    displayField: 'name',
-                    valueField: 'value',
-                    store: Ext.create('Ext.data.Store', {
-                        data: [{
-                            name: 'Atlanta',
-                            value: 'Atlanta'
-                        },{
-                            name: 'Boston',
-                            value: 'Boston'
-                        }]
-                    }),
+                    displayField: 'city',
+                    valueField: 'city',
+                    bind: {
+                        store: '{combo}'
+                    },
                     listeners: {
-                        select: 'filterStore'
+                        change: 'filterStore'
                     }
                 },{
                     xtype: 'button',
@@ -68,19 +81,15 @@ Ext.onReady(function () {
                 }]
             }],            
             items: [{
-                xtype: "cartoMap",
+                xtype: "cartomap",
                 region: 'center',
                 center: 'us',
                 reference: 'map',
                 basemap: 'darkMatterLite',
                 layers: [{
-                    username: 'crestonedigital',
                     subLayers: [{
-                        storeId: 'layer1',
-                        table: 'us_metro_stations',
-                        autoLoad: true
-                  }]
-
+                        bind: '{layer}'
+                    }]
                 }]
             },{
                 xtype: 'grid',
@@ -89,12 +98,9 @@ Ext.onReady(function () {
                 split: true,
                 height: 350,
                 plugins: 'gridfilters',
-                listeners: {
-                    afterrender: function(){
-                        this.setStore(Ext.getStore('layer1'));
-                    }
+                bind: {
+                    store: '{layer}'
                 },
-                // store: Ext.getStore('layer1'),
                 columns: [
                     { text: 'City', dataIndex: 'city', flex: 1, filter: {
                         type: 'string',

@@ -3,7 +3,7 @@ Ext.Loader.setPath('CartoDb', '../../src/');
 
 Ext.require([
     'CartoDb.CartoMap',
-    'Ext.data.Store'
+    'CartoDb.CartoStore'
 ]);
 
 
@@ -12,11 +12,6 @@ var mapController = Ext.create('Ext.app.ViewController',{
     onSelect: function(rowmodel, record) {
         this.lookup('southGrid').ensureVisible(record);
     }
-});
-
-
-var mapViewModel = Ext.create('Ext.app.ViewModel',{
-
 });
 
 /**
@@ -31,10 +26,21 @@ Ext.onReady(function () {
         items: [{
             xtype: 'panel',
             layout: 'border',
-            viewModel: mapViewModel,
+            viewModel: {
+                stores: {
+                    layer: {
+                        type: 'carto',
+                        autoLoad: true,
+                        proxy: {
+                            username: 'crestonedigital',
+                            table: 'petroleum_refineries'
+                        }
+                    }
+                }
+            },
             controller: mapController,
             items: [{
-                xtype: "cartoMap",
+                xtype: "cartomap",
                 region: 'center',
                 center: 'us',
                 reference: 'map',
@@ -43,17 +49,11 @@ Ext.onReady(function () {
                 },
                 basemap: 'darkMatterLite',
                 layers: [{
-                  username: 'crestonedigital',
                   subLayers: [{
-                      storeId: 'layer1',
-                    //   enableLatLng: true,
-                      table: 'petroleum_refineries',
                       style: {
                           type: 'intensity',
-                        //   width: 15,
-                        //   fillOpacity: 0.5
                       },
-                      autoLoad: true,
+                      bind: '{layer}',
                       interactivity: {
                           enable: true,
                           fields: [
@@ -73,12 +73,10 @@ Ext.onReady(function () {
                 split: true,
                 idProperty: 'cartodb_id',
                 bind: {
-                    selection: '{selectedValue}'
+                    selection: '{selectedValue}',
+                    store: '{layer}'
                 },
                 listeners: {
-                    afterrender: function(){
-                        this.setStore(Ext.getStore('layer1'));
-                    },
                     select: 'onSelect'
                 },
                 height: 350,
