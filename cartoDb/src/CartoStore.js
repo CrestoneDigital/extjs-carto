@@ -47,6 +47,10 @@ Ext.define('CartoDb.CartoStore',{
         }
         me.callParent([options]);
     },
+
+    addSubLayerToProxy: function(subLayer) {
+        this.getProxy().addSubLayer(subLayer, true);
+    },
     
     getSubLayer: function() {
         return this._subLayer;

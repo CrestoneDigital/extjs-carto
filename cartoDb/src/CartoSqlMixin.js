@@ -35,7 +35,7 @@ Ext.define('CartoDb.CartoSqlMixin', {
         sql += this.getFilter(params);
         sql += this.getGroupByIfExists(groupBy);
         // sql += this.getBounds(params);
-        sql += this.getOrder(params);
+        sql += (options && options.isMap) ? '' : this.getOrder(params);
         sql += this.getPaging(params);
         return sql;
     },

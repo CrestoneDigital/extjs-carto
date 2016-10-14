@@ -25,7 +25,8 @@ Ext.define('CartoDb.CartoProxy', {
         enableData: true,
         enableBounds: false,
         enableLatLng: false,
-        limit: null
+        limit: null,
+        subLayers: []
     },
 
     /**
@@ -40,6 +41,15 @@ Ext.define('CartoDb.CartoProxy', {
             groupBy.addField(field);
         }
         this.setGroupBy(groupBy);
+    },
+
+    addSubLayer: function(subLayer, load) {
+        subLayer.setTable(this.getTable());
+        subLayer.getLayer().setUsername(this.getUsername());
+        this.subLayers.push(subLayer);
+        if (load && this._cachedSql) {
+            subLayer.create(this._cachedSql);
+        }
     },
 
     /**
@@ -67,6 +77,7 @@ Ext.define('CartoDb.CartoProxy', {
      */
     buildRequest: function(operation) {
         var me = this,
+            subLayers = this.getSubLayers(),
             request, operationId, idParam, sql;
         switch (this.getMode()) {
             case 'tables': sql = this.getTablesSql; break;
@@ -76,6 +87,15 @@ Ext.define('CartoDb.CartoProxy', {
         var params = {
             q: sql
         };
+        if (subLayers.length) {
+            sql = this.sqlBuilder(Ext.apply(me.getParams(operation), this.getCurrentConfig()), {isMap: true});
+            if (sql !== me._cachedSql) {
+                subLayers.forEach(function(subLayer) {
+                    subLayer.create(sql);
+                });
+            }
+        }
+        me._cachedSql = sql;
 
         // Set up the entity id parameter according to the configured name.
         // This defaults to "id". But TreeStore has a "nodeParam" configuration which
@@ -102,6 +122,20 @@ Ext.define('CartoDb.CartoProxy', {
          */
         operation.setRequest(request);
         return request;
+    },
+
+    setUsername: function(username) {
+        this.callParent(arguments);
+        this.getSubLayers().forEach(function(subLayer) {
+            subLayer.getLayer().setUsername(username);
+        });
+    },
+
+    setTable: function(table) {
+        this.callParent(arguments);
+        this.getSubLayers().forEach(function(subLayer) {
+            subLayer.setTable(table);
+        });
     }
 
 });

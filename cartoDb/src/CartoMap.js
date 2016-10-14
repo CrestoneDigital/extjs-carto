@@ -9,6 +9,7 @@ Ext.define('CartoDb.CartoMap', {
         'CartoDb.CartoProxy',
         'CartoDb.CountryCodesLatLongISO3166',
         'CartoDb.CartoStore',
+        'CartoDb.CartoLayer',
         'CartoDb.CartoBasemaps'
     ],
     config: {
@@ -202,38 +203,39 @@ Ext.define('CartoDb.CartoMap', {
 	 * @param  {} eOpts
 	 */
 	afterRender: function(t, eOpts){
-        var mapCenter = (typeof this.getCenter() === 'string') ? this.mixins['CartoDb.CountryCodesLatLongISO3166'].codes[this.getCenter()] : (Array.isArray(this.getCenter())) ? this.getCenter() : [0,0];
+        var me = this,
+            mapCenter = (typeof me.getCenter() === 'string') ? me.mixins['CartoDb.CountryCodesLatLongISO3166'].codes[me.getCenter()] : (Array.isArray(me.getCenter())) ? me.getCenter() : [0,0];
         
-        this.setMap(L.map(this.getId(), {
-            scrollWheelZoom: this.getScrollWheelZoom(),
+        me._subLayers = {};
+        me.setMap(L.map(me.getId(), {
+            scrollWheelZoom: me.getScrollWheelZoom(),
             center:          mapCenter,
-            zoom:            this.getDefaultMapZoom(),
-            minZoom:        this.getMinZoom(),
-            maxZoom:        this.getMaxZoom()
+            zoom:            me.getDefaultMapZoom(),
+            minZoom:        me.getMinZoom(),
+            maxZoom:        me.getMaxZoom()
         }));
-        if(!this.getBasemap()){
-            this.setBasemap('positronLite');
+        if(!me.getBasemap()){
+            me.setBasemap('positronLite');
         } else {
-            this.getBasemap().addTo(this.getMap()).bringToBack();
+            me.getBasemap().addTo(me.getMap()).bringToBack();
         }
-        this.getMap().addEventListener('moveend', this.publishMapBounds, this);
-        // this.getMap().addEventListener('zoomend', this.publishMapBounds, this);
-        this.getMap().addEventListener('click', function(e){
-            this.fireEvent('mapClicked', this, this.getMap(), e);
-        }, this);
-        this.fireEvent('mapLoaded');
-        var initialLayers = this.getLayers();
-        if(initialLayers.length > 0){
+        me.getMap().addEventListener('moveend', me.publishMapBounds, me);
+        // me.getMap().addEventListener('zoomend', me.publishMapBounds, me);
+        me.getMap().addEventListener('click', function(e){
+            me.fireEvent('mapClicked', me, me.getMap(), e);
+        }, me);
+        me.fireEvent('mapLoaded');
+        var initialLayers = me.getLayers();
+        if(initialLayers.length){
             initialLayers.forEach(function(item, index){
-                this.addLayer(item, function(err, layer){
-                    if(err){
-                        console.log('err');
-                    }else{
-                        console.log('success');
-                    }
-                });
-            }.bind(this));
+                initialLayers[index] = me.addLayer(item);
+            });
         }
+    },
+
+    addLayer: function(config) {
+        config.map = this;
+        return Ext.create('CartoDb.CartoLayer', config);
     },
 	/**
 	 * @param  {} w
@@ -313,26 +315,40 @@ Ext.define('CartoDb.CartoMap', {
      * @param  {object} data
      * @param  {function} callback
      */
-    addLayer: function(data, callback) {
-        this.setStores(this.createDataStores(data));
-        this.createLayer(data, function(err, layer){
-            if(err) {
-                console.log('Error: ' + err);
-            }else{
-                return callback ? callback(null, layer) : null;
-            }
-        });
+    // addLayer: function(data, callback) {
+    //     this.setStores(this.createDataStores(data));
+    //     this.createLayer(data, function(err, layer){
+    //         if(err) {
+    //             console.log('Error: ' + err);
+    //         }else{
+    //             return callback ? callback(null, layer) : null;
+    //         }
+    //     });
+    // },
+
+    addSubLayer: function(subLayer) {
+        console.log(this.getId());
+        this._subLayers[subLayer.subLayerId] = subLayer;
+    },
+
+    getSubLayer: function(subLayerId) {
+        return this._subLayers[subLayerId];
+    },
+
+    getLayer: function(layerId) {
+        return this.layers[Ext.Array.pluck(this.layers, 'id').indexOf(layerId)];
     },
 
     /**
-     * Removes a subLayer from the map based on the subLayer's storeId.
+     * Removes a subLayer from the map based on the subLayer's id.
      * @param  {} storeId
      */
-    removeSubLayer: function(storeId) {
-        if (typeof storeId === 'string') {
-            var store = Ext.getStore(storeId);
-            if (store) {
-                store.destroy();
+    removeSubLayer: function(subLayerId) {
+        var subLayer;
+        if (typeof subLayerId === 'string') {
+            subLayer = this.getSubLayer(subLayerId);
+            if (subLayer) {
+                subLayer.remove();
             }
         }
     },
@@ -342,142 +358,29 @@ Ext.define('CartoDb.CartoMap', {
      * @param  {integer} index
      * @param  {function} callback
      */
-    removeLayerAtIndex: function(index, callback) {
-        var layer = this.getLayers()[index];
-        if (layer) {
-            this.getMap().removeLayer(layer);
-            this.getLayers().splice(index,1);
-        }
-    },
+    // removeLayerAtIndex: function(index, callback) {
+    //     var layer = this.getLayers()[index];
+    //     if (layer) {
+    //         this.getMap().removeLayer(layer);
+    //         this.getLayers().splice(index,1);
+    //     }
+    // },
 
     /**
      * Creates the map layers based on the initial config.
      * @param  {object} data
      * @param  {function} cb
      */
-    createLayer: function(data, cb){
-        var subLayers = [],
-            dataStores = this.getStores();
-        dataStores.forEach(function(item, index){
-            var subLayer = {sql: item.getCartoSql(true), cartocss: item.getCartoCSS()};
-            subLayers.push(subLayer);
-        }.bind(this));
-        cartodb.createLayer(this.getMap(), {
-            user_name: data.username,
-            type: 'cartodb',
-            sublayers: subLayers
+    createLayer: function(layer) {
+        var me = this;
+        cartodb.createLayer(this.getMap(), layer.buildCartoLayer())
+        .addTo(this.getMap())
+        .done(function(cartoLayer) {
+            me.getLayer(cartoLayer.options.id).setCartoLayer(cartoLayer);
         })
-        .done(function (layer) {
-            this.getLayers().push(layer);
-            if(!data.hidden) {
-                layer.addTo(this.getMap());
-            }
-            for(var i = 0; layer.getSubLayerCount() > i; i++){
-                layer.getSubLayer(i).store = dataStores[i];
-                dataStores[i]._subLayer = layer.getSubLayer(i);
-                if(dataStores[i].interactivity){
-                    var subLayer = layer.getSubLayer(i);
-                    subLayer.setInteraction(dataStores[i].interactivity.enable);
-                    subLayer.set({
-                        interactivity: 'carto_store_id,cartodb_id' + ((dataStores[i].interactivity.fields) ? ',' + dataStores[i].interactivity.fields.join(',') : '')
-                    });
-                    var tooltip = dataStores[i].interactivity.tooltip;
-                    if(tooltip && tooltip.enable){
-                        this.getMap().viz.addOverlay({
-                            type: 'tooltip',
-                            layer: subLayer,
-                            template: tooltip.html || this.createDefaultTooltip(tooltip.fields || dataStores[i].interactivity.fields, tooltip.mood),
-                            position: tooltip.position || 'bottom|right',
-                            fields: [this.createFields(dataStores[i].interactivity.fields)]
-                        });
-                    }
-                    subLayer.on('featureClick', this.featureClick.bind(this));
-                    subLayer.on('featureOver', this.featureOver.bind(this));
-                    subLayer.on('featureOut', this.featureOut.bind(this));
-                }
-            }
-            cb(null, layer);
-        }.bind(this))
         .error(function(error) {
-            cb(error);
-        }.bind(this));
-
+            console.error(error);
+        });
     },
-
-    /**
-     * Creates the data stores associated with each subLayer.
-     * @param  {object} data
-     */
-    createDataStores: function(data) {
-        var storesArray = [];
-        if (storesArray.length > 0) {
-            for (var i = 0; i < storesArray.length; i++) {
-                if (typeof storesArray[i] === 'string') {
-                    storesArray[i] = Ext.getStore(storesArray[i]);
-                }
-            }
-        }
-        data.subLayers.forEach(function(item, index){
-            var storeId = (item.storeId) ? item.storeId : new Date().getTime();
-            var username = (data.username) ? data.username : this.getUsername();
-            var store = Ext.create("CartoDb.CartoStore",{
-                    storeId: storeId,
-                    _subLayer: null,
-                    style: item.style,
-                    proxy: {
-                        username: username,
-                        enableLatLng: item.enableLatLng || false,
-                        table: item.table
-                    }
-                });
-            // if(item.transform) store.proxy.reader.transform = item.transform;
-            if(item.transform) store.proxy.reader.setConfig('transform', item.transform);
-            if(item.autoLoad) store.load();
-            if(item.interactivity) store.interactivity = item.interactivity;
-            storesArray.push(store);
-        }.bind(this));
-        return storesArray;
-    },
-
-    featureClick: function(e, latLng, point, record){
-        var selection = this.getRecord(record.carto_store_id, record.cartodb_id);
-        this.setSelection(selection);
-        this.fireEvent('select', this, this.getMap(), selection, latLng, point, e);
-    },
-
-    featureOver: function() {
-        if (!this._cursor && $('.leaflet-container').css('cursor') != 'pointer' ) {
-            this._cursor = $('.leaflet-container').css('cursor');
-        }
-        $('.leaflet-container').css('cursor','pointer');
-    },
-
-    featureOut: function() {
-        $('.leaflet-container').css('cursor',this._cursor);
-    },
-
-    /**
-     * @param  {String[]} fields
-     * @param  {String} mood - Can be either 'dark' or 'light'.
-     */
-    createDefaultTooltip: function(fields, mood) {
-        var html = '<div class="cartodb-tooltip-content-wrapper ' + (mood || 'light') + '"><div class="cartodb-tooltip-content">';
-        for(var i = 0; i < fields.length; i++){
-            html += '<h4>' + fields[i] + '</h4><p>{{' + fields[i] + '}}</p>';
-        }
-        return html + '</div></div>';
-    },
-
-    createFields: function(fields) {
-        var obj = {};
-        for(var i = 0; i < fields.length; i++){
-            obj[fields[i]] = fields[i];
-        }
-        return obj;
-    },
-
-    getRecord: function(storeId, cartodb_id) {
-        return Ext.getStore(storeId).findRecord('cartodb_id', cartodb_id);
-    }
 
 });

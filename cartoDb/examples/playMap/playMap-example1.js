@@ -66,17 +66,21 @@ var mapController = Ext.create('Ext.app.ViewController',{
         }
     },
     onSelectTable: function(combo, record) {
-        var value = record.get('table_name');
+        var value = record.get('table_name'),
+            store = this.getStore('subLayer');
         this.reset(false);
         this.setByStr('setTable', value);
         this.getViewModel().set('table', value);
-        this.lookup('map').addLayer({
-            username: this.getViewModel().get('username'),
-            subLayers: [{
-                storeId: 'layer1',
-                table: value
-            }]
-        });
+        store.getProxy().setUsername(this.getViewModel().get('username'));
+        store.getProxy().setTable(value);
+        store.load();
+        // this.lookup('map').addLayer({
+        //     username: this.getViewModel().get('username'),
+        //     subLayers: [{
+        //         storeId: 'layer1',
+        //         table: value
+        //     }]
+        // });
         this.getStore('columns').load();
     },
     onSelectColumn: function(combo, record) {
@@ -121,10 +125,7 @@ var mapController = Ext.create('Ext.app.ViewController',{
         }
     },
     onApplyCss: function() {
-        Ext.getStore('layer1').getSubLayer().setCartoCSS(this.lookup('cssEditor').getValue());
-    },
-    onToggleCss: function(seg, button) {
-        Ext.getStore('layer1').getSubLayer().setCartoCSS(button.value);
+        this.lookup('map').getSubLayer('changeableLayer').setCss(this.lookup('cssEditor').getValue());
     },
     onAbout: function() {
         Ext.create('Ext.window.Window', {
@@ -167,6 +168,10 @@ Ext.onReady(function () {
             controller: mapController,
             viewModel: {
                 stores: {
+                    subLayer: {
+                        type: 'CartoStore',
+                        storeId: 'subLayerStore'
+                    },
                     tables: {
                         storeId: 'tablesStore',
                         sorters: 'table_name',
@@ -249,6 +254,15 @@ Ext.onReady(function () {
                         mapLock: '{mapLock.checked}',
                     },
                     storesToLock: ['statsStore'],
+                    layers: [{
+                        subLayers: [{
+                            subLayerId: 'changeableLayer',
+                            bind: {
+                                store: '{subLayer}',
+                                css: '{cssOptions.value}'
+                            }
+                        }]
+                    }]
                 }],
                 tbar: [{
                     xtype: 'combobox',
@@ -297,10 +311,7 @@ Ext.onReady(function () {
                         }, {
                             text: 'Polygon',
                             value: simplePolygonCss
-                        }],
-                        listeners: {
-                            toggle: 'onToggleCss'
-                        }
+                        }]
                     }, '->'],
                     items: [{
                         xtype: 'textareafield',
