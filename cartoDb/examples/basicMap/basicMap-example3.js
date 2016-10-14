@@ -2,7 +2,8 @@ Ext.Loader.setConfig({enabled: true, disableCaching: true});
 Ext.Loader.setPath('CartoDb', '../../src/');
 
 Ext.require([
-    'CartoDb.CartoMap'
+    'CartoDb.CartoMap',
+    'CartoDb.CartoStore'
 ]);
 
 /**
@@ -15,13 +16,17 @@ Ext.onReady(function () {
     Ext.create('Ext.container.Viewport', {
         layout: 'fit',
         items: [{
-            xtype: "cartoMap",
+            xtype: "cartomap",
             center: 'us',
             layers: [{
-                  username: 'crestonedigital',
                   subLayers: [{
-                      storeId: 'layer1',
-                      table: 'petroleum_refineries'
+                      store: {
+                          autoLoad: true,
+                          proxy: {
+                              username: 'crestonedigital',
+                              table: 'petroleum_refineries'
+                          }
+                      }
                   }]
 
             }]

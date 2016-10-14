@@ -29,7 +29,7 @@ Ext.onReady(function () {
             viewModel: {
                 stores: {
                     refineries: {
-                        type: 'CartoStore',
+                        type: 'carto',
                         storeId: 'refineriesStore',
                         autoLoad: true,
                         proxy: {
@@ -42,7 +42,7 @@ Ext.onReady(function () {
             },
             controller: mapController,
             items: [{
-                xtype: "cartoMap",
+                xtype: "cartomap",
                 region: 'center',
                 center: 'us',
                 reference: 'map',
@@ -73,7 +73,7 @@ Ext.onReady(function () {
 
                 }]
             }, {
-                xtype: 'cartoMap',
+                xtype: 'cartomap',
                 region: 'east',
                 width: '50%',
                 bind: {

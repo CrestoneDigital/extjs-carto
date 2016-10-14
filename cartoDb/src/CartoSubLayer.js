@@ -1,6 +1,6 @@
 Ext.define('CartoDb.CartoSubLayer', {
     extend: 'Ext.Component',
-    xtype: 'cartoSubLayer',
+    xtype: 'cartosublayer',
 
     config: {
         sql: '',
@@ -17,15 +17,22 @@ Ext.define('CartoDb.CartoSubLayer', {
         'selection'
     ],
 
+    isSubLayer: true,
+
     defaultBindProperty: 'store',
 
     create: function(sql) {
         this.setSql(sql);
         if (this.getCartoSubLayer()) {
-            console.log('subLayer already exists');
             this.getCartoSubLayer().setSQL(sql);
         } else {
             this.getLayer().createSubLayer(this);
+        }
+    },
+
+    remove: function() {
+        if (this.getCartoSubLayer()) {
+            this.getCartoSubLayer().remove();
         }
     },
 
@@ -108,6 +115,9 @@ Ext.define('CartoDb.CartoSubLayer', {
     },
 
     setStore: function(store) {
+        if (!store.isStore) {
+            store = Ext.create('CartoDb.CartoStore', store);
+        }
         this.callParent(arguments);
         store.addSubLayerToProxy(this);
     },
@@ -119,13 +129,6 @@ Ext.define('CartoDb.CartoSubLayer', {
     getCss: function() {
         return this.css || this.createCss();
     },
-
-    // setCss: function(css) {
-    //     this.callParent(arguments);
-    //     if (this.getCartoSubLayer()) {
-    //         this.getCartoSubLayer().setCartoCSS(css);
-    //     }
-    // },
 
     updateCss: function(css) {
         if (this.getCartoSubLayer()) {

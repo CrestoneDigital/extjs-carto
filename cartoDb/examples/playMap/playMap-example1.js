@@ -39,7 +39,7 @@ var mapController = Ext.create('Ext.app.ViewController',{
         }
         this.lookup('filtersView').removeAll();
         this.filtersAdded = false;
-        this.lookup('map').removeSubLayer('layer1');
+        this.lookup('map').getSubLayer('changeableLayer').setCss(simplePointCss);
         this.lookup('cssOptions').setValue(simplePointCss);
         this.lookup('cssEditor').setValue(simplePointCss);
         this.getStore('columns').removeAll();
@@ -109,7 +109,7 @@ var mapController = Ext.create('Ext.app.ViewController',{
                         valueField: column,
                         displayField: column,
                         store: {
-                            type: 'CartoStore',
+                            type: 'carto',
                             sorters: column,
                             proxy: {
                                 table: table,
@@ -127,6 +127,9 @@ var mapController = Ext.create('Ext.app.ViewController',{
     onApplyCss: function() {
         this.lookup('map').getSubLayer('changeableLayer').setCss(this.lookup('cssEditor').getValue());
     },
+    onCssToggle: function(seg) {
+        this.lookup('map').getSubLayer('changeableLayer').setCss(seg.getValue());
+    },
     onAbout: function() {
         Ext.create('Ext.window.Window', {
             title: 'About Project',
@@ -141,7 +144,7 @@ var mapController = Ext.create('Ext.app.ViewController',{
     onFilterChange: function(field, newValue, oldValue) {
         var filter = field.getReference(),
             property = field.valueField,
-            stores = [Ext.getStore('layer1'), this.getStore('stats')],
+            stores = [this.getStore('subLayer'), this.getStore('stats')],
             containsFilter = newValue.length > 0;
         for (var i = 0; i < stores.length; i++) {
             stores[i].removeFilter(filter, containsFilter);
@@ -169,7 +172,7 @@ Ext.onReady(function () {
             viewModel: {
                 stores: {
                     subLayer: {
-                        type: 'CartoStore',
+                        type: 'carto',
                         storeId: 'subLayerStore'
                     },
                     tables: {
@@ -210,7 +213,7 @@ Ext.onReady(function () {
                         ]
                     },
                     stats: {
-                        type: 'CartoStore',
+                        type: 'carto',
                         storeId: 'statsStore',
                         sorters: 'field',
                         listeners: {
@@ -246,7 +249,7 @@ Ext.onReady(function () {
                 region: 'center',
                 layout: 'fit',
                 items: [{
-                    xtype: "cartoMap",
+                    xtype: "cartomap",
                     center: 'us',
                     reference: 'map',
                     bind: {
@@ -257,10 +260,7 @@ Ext.onReady(function () {
                     layers: [{
                         subLayers: [{
                             subLayerId: 'changeableLayer',
-                            bind: {
-                                store: '{subLayer}',
-                                css: '{cssOptions.value}'
-                            }
+                            bind: '{subLayer}'
                         }]
                     }]
                 }],
@@ -311,7 +311,10 @@ Ext.onReady(function () {
                         }, {
                             text: 'Polygon',
                             value: simplePolygonCss
-                        }]
+                        }],
+                        listeners: {
+                            toggle: 'onCssToggle'
+                        }
                     }, '->'],
                     items: [{
                         xtype: 'textareafield',

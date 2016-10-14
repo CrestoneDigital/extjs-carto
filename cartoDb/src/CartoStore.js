@@ -1,6 +1,6 @@
 Ext.define('CartoDb.CartoStore',{
     extend: 'Ext.data.Store',
-    alias: 'store.CartoStore',
+    alias: 'store.carto',
     requires: [
         'CartoDb.CartoProxy'
     ],

@@ -10,7 +10,7 @@ Ext.require([
 
 /**
  *  
- * Basic map Centered on Russia using Russian ISO3166 code
+ * Basic map Centered on Japan using Japan ISO3166 code
  */
 Ext.onReady(function () {
     Ext.QuickTips.init();
@@ -18,7 +18,7 @@ Ext.onReady(function () {
     Ext.create('Ext.container.Viewport', {
         layout: 'fit',
         items: [{
-            xtype: "cartoMap",
+            xtype: "cartomap",
             center: 'jp'
         }]
     });

@@ -1,6 +1,6 @@
 Ext.define('CartoDb.CartoLayer', {
     extend: 'Ext.Component',
-    xtype: 'cartoLayer',
+    xtype: 'cartolayer',
     requires: [
         'CartoDb.CartoSubLayer'
     ],
@@ -11,11 +11,13 @@ Ext.define('CartoDb.CartoLayer', {
         subLayers: []
     },
 
+    isLayer: true,
+
     createSubLayer: function(subLayer) {
         if (this.getCartoLayer()) {
             this.getCartoLayer().addLayer(subLayer.buildCartoSubLayer());
         } else {
-            this.getMap().createLayer(this);
+            this.getMap().createCartoLayer(this);
         }
     },
 
@@ -41,15 +43,16 @@ Ext.define('CartoDb.CartoLayer', {
     },
 
     initConfig: function(layer) {
-        var me = this;
-        me.callParent(arguments);
+        var me = this.callParent(arguments);
+        me.setId(me.layerId || me.id);
         if (layer.subLayers && layer.subLayers.length) {
             layer.subLayers.forEach(function(subLayer, index) {
                 subLayer.layer = me;
-                layer.subLayers[index] = Ext.create('CartoDb.CartoSubLayer', subLayer);//Ext.ComponentManager.create(subLayer, 'cartoSubLayer');
+                layer.subLayers[index] = Ext.create('CartoDb.CartoSubLayer', subLayer);
                 me.getMap().addSubLayer(layer.subLayers[index]);
             });
         }
         me.setSubLayers(layer.subLayers || []);
+        return me;
     }
 });

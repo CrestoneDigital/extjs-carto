@@ -12,11 +12,16 @@ var dataStore = Ext.create('Ext.data.Store',{
         name: 'Petroleum Refineries',
         value: 'petroleum_refineries',
         mapLayer: {
-            username: 'crestonedigital',
-                  subLayers: [{
-                      storeId: 'layer1',
-                      table: 'petroleum_refineries'
-                  }]
+            subLayers: [{
+                subLayerId: 'petroleumLayer',
+                store: {
+                    autoLoad: true,
+                    proxy: {
+                        username: 'crestonedigital',
+                        table: 'petroleum_refineries'
+                    }
+                }
+            }]
         }
     }]
 });
@@ -30,7 +35,7 @@ var mapController = Ext.create('Ext.app.ViewController',{
         this.lookup('removeButton').enable();
     },
     removeMapLayer: function(button, e, eOpts) {
-        this.lookup('map').removeLayerAtIndex(0);
+        this.lookup('map').removeSubLayer('petroleumLayer');
         this.lookup('combo').reset();
         button.disable();
     }
@@ -50,7 +55,7 @@ Ext.onReady(function () {
             layout: 'fit',
             controller: mapController,
             items: [{
-                xtype: "cartoMap",
+                xtype: "cartomap",
                 center: 'us',
                 reference: 'map'
             }],

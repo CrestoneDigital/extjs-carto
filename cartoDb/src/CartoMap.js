@@ -3,7 +3,7 @@
  */
 Ext.define('CartoDb.CartoMap', {
     extend: 'Ext.Component',
-    xtype: 'cartoMap',
+    xtype: 'cartomap',
     mixins: [
         'CartoDb.LeafletFunctionsMixin',
         'CartoDb.CartoProxy',
@@ -134,7 +134,7 @@ Ext.define('CartoDb.CartoMap', {
                     this.getMap().removeLayer(oldBasemap);
                 }
                 return L.tileLayer(basemap.url, {
-                    attribution: basemap.attribution,
+                    attribution: basemap.attribution || null,
                     tms: basemap.tms || false
                 });
             }
@@ -228,15 +228,30 @@ Ext.define('CartoDb.CartoMap', {
         var initialLayers = me.getLayers();
         if(initialLayers.length){
             initialLayers.forEach(function(item, index){
-                initialLayers[index] = me.addLayer(item);
+                initialLayers[index] = me.createLayer(item);
             });
         }
     },
 
-    addLayer: function(config) {
+    createLayer: function(config) {
         config.map = this;
         return Ext.create('CartoDb.CartoLayer', config);
     },
+
+    addLayer: function(layer) {
+        if (!layer.isLayer) {
+            layer = this.createLayer(layer);
+        }
+        this.getLayers().push(layer);
+    },
+
+    removeLayer: function(layerId) {
+        var layer = this.getLayer(layerId);
+        if (layer && layer.getCartoLayer()) {
+            layer.getCartoLayer().remove();
+        }
+    },
+
 	/**
 	 * @param  {} w
 	 * @param  {} h
@@ -327,7 +342,6 @@ Ext.define('CartoDb.CartoMap', {
     // },
 
     addSubLayer: function(subLayer) {
-        console.log(this.getId());
         this._subLayers[subLayer.subLayerId] = subLayer;
     },
 
@@ -341,7 +355,7 @@ Ext.define('CartoDb.CartoMap', {
 
     /**
      * Removes a subLayer from the map based on the subLayer's id.
-     * @param  {} storeId
+     * @param  {} subLayerId
      */
     removeSubLayer: function(subLayerId) {
         var subLayer;
@@ -371,7 +385,7 @@ Ext.define('CartoDb.CartoMap', {
      * @param  {object} data
      * @param  {function} cb
      */
-    createLayer: function(layer) {
+    createCartoLayer: function(layer) {
         var me = this;
         cartodb.createLayer(this.getMap(), layer.buildCartoLayer())
         .addTo(this.getMap())
