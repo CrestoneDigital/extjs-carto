@@ -124,11 +124,32 @@ Name | Type | Default | Description
 
 ### Basic
 
-* [Visualization of a map in Ext JS](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example1.html)
-* [A map centered on Japan](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example2.html)
-* [A map with a simple carto layer](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example1.html)
-* [A map whose layers can be added and removed](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example1.html)
+* [Visualization of a Map in Ext JS](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example1.html)
+* [A Map centered on Japan](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example2.html)
+* [A Map with a simple Carto layer](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example3.html)
+* [A Map whose layers can be added and removed](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example4.html)
 
+### Grid/Map
+
+* [Grid and Map bound to Carto Store](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example1.html)
+* [Map with hidden layer and multiple selected actions](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example2.html)
+* [Grid locked to Map bounds (with tooltip)](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example3.html)
+* [Grid and Map with filter options](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example4.html)
+* [Grid and Map with auto filter options](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example5.html)
+* [Grid and Map with combo filter](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example6.html)
+* [Grid and Map with combo filter](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example7.html)
+
+### Carto Account
+
+* [Carto Stores with tables and columns](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/cartoAccount/cartoAccount-example1.html)
+
+### Store Binding
+
+* [Grid and two Maps bound to one Carto Store](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/storeBinding/storeBinding-example1.html)
+
+### [Wildfire Exploration](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/fireMap/fireMap-example2.html)
+
+### [Carto Map Explorer](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/playMap/playMap-example1.html)
 
 
 [Ext.data.Model]: http://docs.sencha.com/extjs/6.2.0/classic/Ext.data.Model.html
