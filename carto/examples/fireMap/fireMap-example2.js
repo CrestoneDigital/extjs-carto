@@ -173,7 +173,7 @@ Ext.onReady(function () {
                 region: 'center',
                 layout: 'fit',
                 items: [{
-                    xtype: "cartoMap",
+                    xtype: "cartomap",
                     center: 'us',
                     reference: 'map',
                     basemap: 'darkMatterLite',
