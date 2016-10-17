@@ -122,7 +122,12 @@ Name | Type | Default | Description
 
 ## Demos
 
-* [Visualization of a map in Ext JS][http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example1.html]
+### Basic
+
+* [Visualization of a map in Ext JS](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example1.html)
+* [A map centered on Japan](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example2.html)
+* [A map with a simple carto layer](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example1.html)
+* [A map whose layers can be added and removed](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example1.html)
 
 
 
