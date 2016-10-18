@@ -3,13 +3,7 @@ Ext.Loader.setPath('CartoDb', '../../src');
 
 Ext.require([
     'CartoDb.CartoMap',
-    'CartoDb.CartoStore',
-    'CartoDb.CartoProxy',
     'Ext.data.Store'
-    // 'Ext.chart.CartesianChart',
-    // 'Ext.chart.axis.Numeric',
-    // 'Ext.chart.axis.Category',
-    // 'Ext.chart.series.Bar'
 ]);
 var aboutHtml = ['<div class="about-style"><p>Data provided by <a href="http://wildfire.cr.usgs.gov/firehistory/index.html" target="_blank">The USGS Federal Fire Occurrence Website</a>.',
 'The Federal Fire Occurrence Website is an official government website that provides users with the ability to query, research and download wildland fire occurrence data. The Federal Fire Occurrence Website is an official Department of the Interior Website provided by the United States Geological Survey.<br>',
@@ -88,23 +82,6 @@ var causeOfFiresCss = ['#wildfire {'+
                         '}'].join(' ');
 
 var mapController = Ext.create('Ext.app.ViewController',{
-    init: function() {
-        var totalsStore = Ext.create('CartoDb.CartoStore', {
-            storeId: 'totalsStore',
-            proxy: {
-                table: 'wildfire',
-                username: 'crestonedigital',
-                groupBy: 'cause'
-            },
-            listeners: {
-                load: {
-                    fn: 'updateData',
-                    scope: this
-                }
-            },
-            autoLoad: true
-        });
-    },
     updateData: function(store, records) {
         data = {};
         for (var i = 0; i < records.length; i++) {
@@ -126,21 +103,21 @@ var mapController = Ext.create('Ext.app.ViewController',{
     },
     onStatsToggle: function(seg, button, isPressed) {
         if (isPressed) {
-            var store = Ext.getStore('firesStats');
+            var store = this.getStore('stats');
             store.getProxy().getReader().propertyToAggregateOn = button.agg;
             store.load();
         }
     },
     showAllFires: function() {
-        Ext.getStore('layer1').getSubLayer().setCartoCSS(allFiresCss);
+        this.lookup('map').getSubLayer('firesLayer').setCss(allFiresCss);
     },
     showCauseOfFires: function() {
-        Ext.getStore('layer1').getSubLayer().setCartoCSS(causeOfFiresCss);
+        this.lookup('map').getSubLayer('firesLayer').setCss(causeOfFiresCss);
     },
     onFilterChange: function(field, newValue, oldValue) {
         var filter = field.getReference(),
             property = field.valueField,
-            stores = [Ext.getStore('layer1'), Ext.getStore('firesStats'), Ext.getStore('totalsStore')],
+            stores = [this.getStore('layer'), this.getStore('stats'), this.getStore('totals')],
             containsFilter = newValue.length > 0;
         for (var i = 0; i < stores.length; i++) {
             stores[i].removeFilter(filter, containsFilter);
@@ -156,8 +133,6 @@ var mapController = Ext.create('Ext.app.ViewController',{
     }
 });
 
-var mapViewModel = Ext.create('Ext.app.ViewModel');
-
 Ext.onReady(function () {
     Ext.QuickTips.init();
 
@@ -167,7 +142,87 @@ Ext.onReady(function () {
             xtype: 'panel',
             layout: 'border',
             controller: mapController,
-            viewModel: mapViewModel,
+            viewModel: {
+                stores: {
+                    layer: {
+                        type: 'carto',
+                        storeId: 'layer1',
+                        autoLoad: true,
+                        proxy: {
+                            username: 'crestonedigital',
+                            table: 'wildfire'
+                        }
+                    },
+                    totals: {
+                        type: 'carto',
+                        storeId: 'totalsStore',
+                        proxy: {
+                            table: 'wildfire',
+                            username: 'crestonedigital',
+                            groupBy: 'cause'
+                        },
+                        listeners: {
+                            load: 'updateData'
+                        },
+                        autoLoad: true
+                    },
+                    stats: {
+                        type: 'carto',
+                        autoLoad: true,
+                        storeId: 'firesStats',
+                        filters: [{
+                            property: 'year_',
+                            operator: 'notnull'
+                        }],
+                        sorters: {
+                            property: 'year',
+                            direction: 'desc'
+                        },
+                        proxy: {
+                            table: 'wildfire',
+                            username: 'crestonedigital',
+                            groupBy: [{
+                                property: 'year_',
+                                name: 'year'
+                            }, {
+                                property: 'totalacres',
+                                name: 'sum',
+                                aggregateType: 'sum'
+                            }, {
+                                property: 'totalacres',
+                                name: 'avg',
+                                aggregateType: 'avg'
+                            }, {
+                                property: 'totalacres',
+                                name: 'min',
+                                aggregateType: 'min'
+                            }, {
+                                property: 'totalacres',
+                                name: 'max',
+                                aggregateType: 'max'
+                            }, {
+                                property: 'totalacres',
+                                name: 'dev',
+                                aggregateType: 'stddev'
+                            }],
+                            reader: {
+                                propertyToAggregateOn: 'sum',
+                                transform: function(data) {
+                                    var acres = Ext.Array.pluck(data.rows, this.propertyToAggregateOn),
+                                        avg = jStat.mean(acres),
+                                        dev = jStat.stdev(acres, true);
+
+                                    return data.rows.map(function(row) {
+                                        var sig = Math.floor(Math.abs((row[this.propertyToAggregateOn] - avg)/dev));
+                                        row.sig = (isNaN(sig)) ? 0 : sig;
+                                        return row;
+                                    }.bind(this));
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             items: [{
                 xtype: 'panel',
                 region: 'center',
@@ -182,10 +237,9 @@ Ext.onReady(function () {
                     },
                     storesToLock: ['firesStats', 'totalsStore'],
                     layers: [{
-                        username: 'crestonedigital',
                         subLayers: [{
-                            storeId: 'layer1',
-                            table: 'wildfire',
+                            subLayerId: 'firesLayer',
+                            bind: '{layer}',
                             style: {
                                 css: allFiresCss
                             }
@@ -251,7 +305,6 @@ Ext.onReady(function () {
                     }
                     )
                 }, {
-                    // xtype: 'cartesian',
                     xtype: 'grid',
                     columns: [
                         {text: 'Year', dataIndex: 'year', width: 65},
@@ -285,106 +338,18 @@ Ext.onReady(function () {
                             toggle: 'onStatsToggle'
                         }
                     }, '->'],
-                    store: {
-                        type: 'CartoStore',
-                        autoLoad: true,
-                        storeId: 'firesStats',
-                        filters: [{
-                            property: 'year_',
-                            operator: 'notnull'
-                        }],
-                        // groupBy: [{
-                        //     property: 'year_',
-                        //     name: 'year'
-                        // }, {
-                        //     property: 'totalacres',
-                        //     name: 'acres',
-                        //     aggregateType: 'sum'
-                        // }],
-                        sorters: {
-                            property: 'year',
-                            direction: 'desc'
-                        },
-                        proxy: {
-                            table: 'wildfire',
-                            username: 'crestonedigital',
-                            groupBy: [{
-                                property: 'year_',
-                                name: 'year'
-                            }, {
-                                property: 'totalacres',
-                                name: 'sum',
-                                aggregateType: 'sum'
-                            }, {
-                                property: 'totalacres',
-                                name: 'avg',
-                                aggregateType: 'avg'
-                            }, {
-                                property: 'totalacres',
-                                name: 'min',
-                                aggregateType: 'min'
-                            }, {
-                                property: 'totalacres',
-                                name: 'max',
-                                aggregateType: 'max'
-                            }, {
-                                property: 'totalacres',
-                                name: 'dev',
-                                aggregateType: 'stddev'
-                            }],
-                            reader: {
-                                propertyToAggregateOn: 'sum',
-                                transform: function(data) {
-                                    var acres = Ext.Array.pluck(data.rows, this.propertyToAggregateOn),
-                                        avg = jStat.mean(acres),
-                                        dev = jStat.stdev(acres, true);
-
-                                    return data.rows.map(function(row) {
-                                        var sig = Math.floor(Math.abs((row[this.propertyToAggregateOn] - avg)/dev));
-                                        row.sig = (isNaN(sig)) ? 0 : sig;
-                                        return row;
-                                    }.bind(this));
-                                }
-                            }
-                        }
+                    bind: {
+                        store: '{stats}'
                     }
-                    // axes: [{
-                    //     type: 'numeric',
-                    //     position: 'left',
-                    //     title: {
-                    //         text: 'Sample Values',
-                    //         fontSize: 15
-                    //     },
-                    //     fields: 'value'
-                    // }, {
-                    //     type: 'category',
-                    //     position: 'bottom',
-                    //     title: {
-                    //         text: 'Sample Values',
-                    //         fontSize: 15
-                    //     },
-                    //     fields: 'name'
-                    // }],
-                    // series: {
-                    //     type: 'bar',
-                    //     // subStyle: {
-                    //     //     fill: ['#388FAD'],
-                    //     //     stroke: '#1F6D91'
-                    //     // },
-                    //     xField: 'name',
-                    //     yField: 'value'
-                    // }
                 }, {
                     title: 'Filters',
                     margin: 10,
                     layout: {
                         type: 'vbox',
-                        // pack: 'center',
                         align: 'center'
                     },
                     defaults: {
                         xtype: 'tagfield',
-                        // flex: 1,
                         width: '100%',
                         listeners: {
                             change: 'onFilterChange'
@@ -396,7 +361,7 @@ Ext.onReady(function () {
                         valueField: 'state',
                         displayField: 'state',
                         store: {
-                            type: 'CartoStore',
+                            type: 'carto',
                             storeId: 'statesStore',
                             sorters: 'state',
                             proxy: {
@@ -411,7 +376,7 @@ Ext.onReady(function () {
                         valueField: 'sizeclass',
                         displayField: 'sizeclass',
                         store: {
-                            type: 'CartoStore',
+                            type: 'carto',
                             storeId: 'sizeStore',
                             sorters: 'sizeclass',
                             proxy: {
@@ -426,7 +391,7 @@ Ext.onReady(function () {
                         valueField: 'firetype',
                         displayField: 'firetype',
                         store: {
-                            type: 'CartoStore',
+                            type: 'carto',
                             storeId: 'fireTypeStore',
                             sorters: 'firetype',
                             proxy: {
@@ -441,7 +406,7 @@ Ext.onReady(function () {
                         valueField: 'protection',
                         displayField: 'protection',
                         store: {
-                            type: 'CartoStore',
+                            type: 'carto',
                             storeId: 'protectionTypeStore',
                             sorters: 'protection',
                             proxy: {
@@ -456,7 +421,7 @@ Ext.onReady(function () {
                         valueField: 'speccause',
                         displayField: 'speccause',
                         store: {
-                            type: 'CartoStore',
+                            type: 'carto',
                             storeId: 'specificCauseStore',
                             sorters: 'speccause',
                             proxy: {
@@ -471,7 +436,7 @@ Ext.onReady(function () {
                         valueField: 'statcause',
                         displayField: 'statcause',
                         store: {
-                            type: 'CartoStore',
+                            type: 'carto',
                             storeId: 'statisticalCauseStore',
                             sorters: 'statcause',
                             proxy: {
@@ -486,7 +451,7 @@ Ext.onReady(function () {
                         valueField: 'year_',
                         displayField: 'year_',
                         store: {
-                            type: 'CartoStore',
+                            type: 'carto',
                             storeId: 'yearStore',
                             sorters: 'year_',
                             proxy: {
