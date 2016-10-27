@@ -48,57 +48,80 @@ Ext.define('CartoDb.CartoSqlMixin', {
      * @param  {Object} params
      */
     getFilter: function(params) {
-        var str = '';
-        var tmpAr = (typeof params.filter === 'string') ? Ext.JSON.decode(params.filter) : params.filter;
+        var str = '',
+            tmpAr = (typeof params.filter === 'string') ? Ext.JSON.decode(params.filter) : params.filter,
+            property,
+            value,
+            operator;
         if (tmpAr && tmpAr.length > 0) {
             tmpAr.forEach(function(rec) {
-                if (rec.property && rec.value) {
-                    var operator = (rec.operator) ? rec.operator : '=';
-                    switch(operator) {
-                        case 'like':
-                            str += ' AND ' + rec.property + ' ' + operator + " '" + rec.value + "%' ";
-                            break;
-                        case '=':
-                            str += ' AND ' + rec.property + ' ' + operator + " '" + rec.value + "' ";
-                            break;
-                        case 'lt':
-                            if(typeof rec.value === 'string'){
-                                str += ' AND ' + rec.property + '::date  ' + " < '" + rec.value + "'";
-                            }else{
-                                str += ' AND ' + rec.property + ' ' + " < " + rec.value;
-                            }       
-                            break;
-                        case 'gt':
-                            if(typeof rec.value === 'string'){
-                                str += ' AND ' + rec.property + '::date  ' + " > '"  + rec.value + "'::date";
-                            }else{
-                                str += ' AND ' + rec.property + ' ' + " > "  + rec.value;
-                            }
-                            break;
-                        case 'eq':
-                            if(typeof rec.value === 'string'){
-                                str += ' AND ' + rec.property + '::date  ' + " = '"  + rec.value + "'::date";
-                            }else{
-                                str += ' AND ' + rec.property + ' ' + " = "  + rec.value;
-                            }
-                            break;
-                        case 'in':
-                            if(Ext.isArray(rec.value)) {
-                                var temp = rec.value.slice();
-                                for (var i = 0; i < temp.length; i++) temp[i] = this.wrapString(temp[i]);
-                                str += ' AND ARRAY[' + rec.property + '] <@ ARRAY[' + temp.join(',') + ']';
-                            }
-                            break;
-                        default:
-                            console.warn("Unknown operator '" + operator + "'. Skipping.");
+                property = rec.getProperty();
+                value = rec.getValue();
+                operator = rec.getOperator();
+                if (property && value) {
+                    if (value instanceof RegExp) {
+                        str += ' AND ' + property + " ~* '" + value.toString().slice(1,-1) + "'";
+                    } else {
+                        var operator = (operator) ? operator : '=';
+                        switch(operator) {
+                            case 'like':
+                                str += ' AND ' + property + ' ' + operator + " '" + value + "%' ";
+                                break;
+                            case '=':
+                                str += ' AND ' + property + ' ' + operator + " '" + value + "' ";
+                                break;
+                            case 'lt':
+                                if(typeof value === 'string'){
+                                    str += ' AND ' + property + '::date  ' + " < '" + value + "'";
+                                }else{
+                                    str += ' AND ' + property + ' ' + " < " + value;
+                                }       
+                                break;
+                            case 'gt':
+                                if(typeof value === 'string'){
+                                    str += ' AND ' + property + '::date  ' + " > '"  + value + "'::date";
+                                }else{
+                                    str += ' AND ' + property + ' ' + " > "  + value;
+                                }
+                                break;
+                            case 'eq':
+                                if(typeof value === 'string'){
+                                    str += ' AND ' + property + '::date  ' + " = '"  + value + "'::date";
+                                }else{
+                                    str += ' AND ' + property + ' ' + " = "  + value;
+                                }
+                                break;
+                            case 'in':
+                                if(Ext.isArray(value)) {
+                                    var temp = value.slice();
+                                    for (var i = 0; i < temp.length; i++) temp[i] = this.wrapString(temp[i]);
+                                    str += ' AND ARRAY[' + property + '] <@ ARRAY[' + temp.join(',') + ']';
+                                }
+                                break;
+                            case 'regex':
+                                var validRegExp = true;
+                                try {
+                                    new RegExp(value);
+                                } catch (e) {
+                                    validRegExp = false;
+                                }
+                                if (validRegExp) {
+                                    str += ' AND ' + property + " ~* '" + value + "'";
+                                } else {
+                                    console.error("Invalid Regular Expression '" + value + "'. Skipping.");
+                                }
+                                break;
+                            default:
+                                console.warn("Unknown operator '" + operator + "'. Skipping.");
+                        }
                     }
-                } else if (rec.property && rec.operator) {
-                    switch (rec.operator) {
+                } else if (property && operator && !rec.getDisableOnEmpty()) {
+                    switch (operator) {
                         case 'notnull':
-                            str += ' AND ' + rec.property + ' IS NOT NULL';
+                            str += ' AND ' + property + ' IS NOT NULL';
                             break;
                         default:
-                            console.warn("Unknown operator '" + rec.operator + "'. Skipping.")
+                            console.warn("Unknown operator '" + operator + "'. Skipping.")
                     }
                 }
                 return '';

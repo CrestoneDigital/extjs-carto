@@ -374,7 +374,7 @@ Ext.onReady(function () {
                         reference: 'sizeFilter',
                         fieldLabel: 'Size Class',
                         valueField: 'sizeclass',
-                        displayField: 'sizeclass',
+                        displayField: 'readable',
                         store: {
                             type: 'carto',
                             storeId: 'sizeStore',
@@ -382,14 +382,48 @@ Ext.onReady(function () {
                             proxy: {
                                 table: 'wildfire',
                                 username: 'crestonedigital',
-                                groupBy: 'sizeclass'
+                                groupBy: 'sizeclass',
+                                reader: {
+                                    transform: function(data) {
+                                        return data.rows.map(function(row) {
+                                            switch (row.sizeclass) {
+                                                case 'A':
+                                                row.readable = '0.0 - 0.2 Acres';
+                                                break;
+                                                case 'B':
+                                                row.readable = '0.3 - 9.9 Acres';
+                                                break;
+                                                case 'C':
+                                                row.readable = '10.0 - 99.9 Acres';
+                                                break;
+                                                case 'D':
+                                                row.readable = '100.0 - 299.9 Acres';
+                                                break;
+                                                case 'E':
+                                                row.readable = '300.0 - 999.9 Acres';
+                                                break;
+                                                case 'F':
+                                                row.readable = '1000.0 - 4999.9 Acres';
+                                                break;
+                                                case 'G':
+                                                row.readable = 'Larger than 5000 Acres';
+                                                break;
+                                                case null:
+                                                break;
+                                                default:
+                                                row.readable = 'Not Rated';
+                                            }
+                                            return row;
+                                        });
+                                    }
+                                }
                             }
                         }
                     }, {
                         reference: 'fireTypeFilter',
                         fieldLabel: 'Fire Type',
                         valueField: 'firetype',
-                        displayField: 'firetype',
+                        displayField: 'readable',
                         store: {
                             type: 'carto',
                             storeId: 'fireTypeStore',
@@ -397,14 +431,46 @@ Ext.onReady(function () {
                             proxy: {
                                 table: 'wildfire',
                                 username: 'crestonedigital',
-                                groupBy: 'firetype'
+                                groupBy: 'firetype',
+                                reader: {
+                                    transform: function(data) {
+                                        return data.rows.map(function(row) {
+                                            switch (row.firetype) {
+                                                case 0:
+                                                row.readable = 'Not Defined'
+                                                break;
+                                                case 1:
+                                                row.readable = 'Action Fire/Suppressed Fires';
+                                                break;
+                                                case 2:
+                                                row.readable = 'Natural Out';
+                                                break;
+                                                case 3:
+                                                row.readable = 'Support Action/Assist Fire';
+                                                break;
+                                                case 4:
+                                                row.readable = 'Fuels Management/Prescribed Fire';
+                                                break;
+                                                case 5:
+                                                row.readable = 'False Alarm';
+                                                break;
+                                                case 6:
+                                                row.readable = 'Severity';
+                                                break;
+                                                case null:
+                                                break;
+                                            }
+                                            return row;
+                                        });
+                                    }
+                                }
                             }
                         }
                     }, {
                         reference: 'protectionTypeFilter',
                         fieldLabel: 'Protection Type',
                         valueField: 'protection',
-                        displayField: 'protection',
+                        displayField: 'readable',
                         store: {
                             type: 'carto',
                             storeId: 'protectionTypeStore',
@@ -412,7 +478,48 @@ Ext.onReady(function () {
                             proxy: {
                                 table: 'wildfire',
                                 username: 'crestonedigital',
-                                groupBy: 'protection'
+                                groupBy: 'protection',
+                                reader: {
+                                    transform: function(data) {
+                                        return data.rows.map(function(row) {
+                                            switch (row.protection) {
+                                                case 0:
+                                                row.readable = 'Not Defined'
+                                                break;
+                                                case 1:
+                                                row.readable = 'Bureau land protected by that bureau';
+                                                break;
+                                                case 2:
+                                                row.readable = 'Bureau land protected by another federal agency or bureau under a cooperative agreement';
+                                                break;
+                                                case 3:
+                                                row.readable = 'Bureau land protected by another non-federal agency under a cooperative agreement';
+                                                break;
+                                                case 4:
+                                                row.readable = 'Bureau that takes a confine and contain action of a fire on their land';
+                                                break;
+                                                case 5:
+                                                row.readable = 'Other land not under cooperative agreement or contract where action is taken by the bureau to prevent spread onto their bureau land';
+                                                break;
+                                                case 6:
+                                                row.readable = 'Other land protected by the bureau under a cooperative agreement or contract';
+                                                break;
+                                                case 7:
+                                                row.readable = 'Support actions by the bureau on wildland fires';
+                                                break;
+                                                case 8:
+                                                row.readable = 'Prescribed fires';
+                                                break;
+                                                case 9:
+                                                row.readable = 'Where the appropriate fire management response was based on objectives from an approved NEPA document';
+                                                break;
+                                                case null:
+                                                break;
+                                            }
+                                            return row;
+                                        });
+                                    }
+                                }
                             }
                         }
                     }, {

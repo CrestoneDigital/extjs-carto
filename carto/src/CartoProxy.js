@@ -30,6 +30,81 @@ Ext.define('CartoDb.CartoProxy', {
     },
 
     /**
+     * @private
+     * Copy any sorters, filters etc into the params so they can be sent over the wire
+     */
+    getParams: function(operation) {
+        if (!operation.isReadOperation) {
+            return {};
+        }
+ 
+        var me = this,
+            params = {},
+            grouper = operation.getGrouper(),
+            sorters = operation.getSorters(),
+            filters = operation.getFilters(),
+            page = operation.getPage(),
+            start = operation.getStart(),
+            limit = operation.getLimit(),
+            simpleSortMode = me.getSimpleSortMode(),
+            simpleGroupMode = me.getSimpleGroupMode(),
+            pageParam = me.getPageParam(),
+            startParam = me.getStartParam(),
+            limitParam = me.getLimitParam(),
+            groupParam = me.getGroupParam(),
+            groupDirectionParam = me.getGroupDirectionParam(),
+            sortParam = me.getSortParam(),
+            filterParam = me.getFilterParam(),
+            directionParam = me.getDirectionParam(),
+            hasGroups, index;
+ 
+        if (pageParam && page) {
+            params[pageParam] = page;
+        }
+ 
+        if (startParam && (start || start === 0)) {
+            params[startParam] = start;
+        }
+ 
+        if (limitParam && limit) {
+            params[limitParam] = limit;
+        }
+ 
+        hasGroups = groupParam && grouper;
+        if (hasGroups) {
+            // Grouper is a subclass of sorter, so we can just use the sorter method 
+            if (simpleGroupMode) {
+                params[groupParam] = grouper.getProperty();
+                params[groupDirectionParam] = grouper.getDirection();
+            } else {
+                params[groupParam] = me.encodeSorters([grouper], true);
+            }
+        }
+ 
+        if (sortParam && sorters && sorters.length > 0) {
+            if (simpleSortMode) {
+                index = 0;
+                // Group will be included in sorters, so grab the next one 
+                if (sorters.length > 1 && hasGroups) {
+                    index = 1;
+                }
+                params[sortParam] = sorters[index].getProperty();
+                params[directionParam] = sorters[index].getDirection();
+            } else {
+                params[sortParam] = me.encodeSorters(sorters);
+            }
+ 
+        }
+ 
+        if (filterParam && filters && filters.length > 0) {
+            // We do not want to send the filters as a parameter, as they will be added into the query
+            params[filterParam] = filters;
+        }
+ 
+        return params;
+    },
+
+    /**
      * Adds a field to the proxy's {@link CartoDb.CartoGroupBy}. This will create a groupBy object if one does not exist.
      * @param  {Ext.data.field.Field/Object} field
      */
