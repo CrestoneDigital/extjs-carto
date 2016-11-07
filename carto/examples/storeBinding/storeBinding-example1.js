@@ -33,7 +33,7 @@ Ext.onReady(function () {
                         storeId: 'refineriesStore',
                         autoLoad: true,
                         proxy: {
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             table: 'petroleum_refineries',
                             enableLatLng: true
                         }

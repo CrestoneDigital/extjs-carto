@@ -17,7 +17,7 @@ var dataStore = Ext.create('Ext.data.Store',{
                 store: {
                     autoLoad: true,
                     proxy: {
-                        username: 'crestonedigital',
+                        username: 'extjscarto',
                         table: 'petroleum_refineries'
                     }
                 }

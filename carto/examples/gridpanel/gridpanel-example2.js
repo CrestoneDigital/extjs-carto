@@ -12,7 +12,7 @@ Ext.onReady(function () {
         storeId: 'metrostopsStore',
         proxy: {
             type: 'carto',
-            username: 'crestonedigital',
+            username: 'extjscarto',
             table: 'us_metro_stations'
         },
         autoLoad: true

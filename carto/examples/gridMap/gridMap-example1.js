@@ -32,7 +32,7 @@ Ext.onReady(function () {
                         type: 'carto',
                         autoLoad: true,
                         proxy: {
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             table: 'petroleum_refineries'
                         }
                     }

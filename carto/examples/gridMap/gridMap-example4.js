@@ -33,7 +33,7 @@ Ext.onReady(function () {
                         type: 'carto',
                         autoLoad: true,
                         proxy: {
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             table: 'us_metro_stations'
                         }
                     },
@@ -41,7 +41,7 @@ Ext.onReady(function () {
                         type: 'carto',
                         sorters: 'city',
                         proxy: {
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             table: 'us_metro_stations',
                             groupBy: 'city'
                         }

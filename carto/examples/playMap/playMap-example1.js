@@ -8,10 +8,7 @@ Ext.require([
     'CartoDb.CartoBasemaps',
     'Ext.data.Store'
 ]);
-var aboutHtml = ['<div class="about-style"><p>Data provided by <a href="http://wildfire.cr.usgs.gov/firehistory/index.html" target="_blank">The USGS Federal Fire Occurrence Website</a>.',
-'The Federal Fire Occurrence Website is an official government website that provides users with the ability to query, research and download wildland fire occurrence data. The Federal Fire Occurrence Website is an official Department of the Interior Website provided by the United States Geological Survey.<br>',
-'Wildfire data avaliable at <a href="http://wildfire.cr.usgs.gov/firehistory/data.html" target="_blank">http://wildfire.cr.usgs.gov/firehistory/data.html</a>.</p>',
-'<p><img class="header_logo pull-left" height="90" width="163" src="http://www.crestonedigital.com/resources/images/crestone-digital-logo-white-lg.jpg">Being based in Colorado means that we deal with forest fires on an annual basis. Here at Crestone Digital we wanted to tell more with the data that is being collected and allow others to explore our countries histories wildfires. With CartoDB we have been able to leverage real time filters and statistics with ~700k incidents. Crestone Digital is a full service software solutions provider for all industries and would love to work on your next project. <a href="http://www.crestonedigital.com/" target="_blank">Visit our website to learn more</a>.</p></div>'].join('');
+var aboutHtml = '<div class="about-style"><img class="header_logo pull-left" height="90" width="163" src="http://www.crestonedigital.com/resources/images/crestone-digital-logo-white-lg.jpg">Here at Crestone Digital we want to allow others to visualize their data in exciting new ways. In this example, with the combined power of Ext JS and Carto, you can visualize, filter, aggregate, and style your data, just to explore the possibilities. Crestone Digital is a full service software solutions provider for all industries and would love to work with you on your next project. <a href="http://www.crestonedigital.com/" target="_blank">Visit our website to learn more</a>.</div>';
 
 var simplePointCss   =    '#table {\n   marker-fill-opacity: 0.9;\n   marker-line-color: #FFF;\n   marker-line-width: 1.5;\n   marker-line-opacity: 1;\n   marker-placement: point;\n   marker-type: ellipse;\n   marker-width: 10;\n   marker-fill: #FF6600;\n   marker-allow-overlap: true;\n}';
 var simpleLineCss    =     '#table {\n  line-color: #FFF;\n  line-width: 0.5;\n  line-opacity: 1;\n}';
@@ -74,13 +71,6 @@ var mapController = Ext.create('Ext.app.ViewController',{
         store.getProxy().setUsername(this.getViewModel().get('username'));
         store.getProxy().setTable(value);
         store.load();
-        // this.lookup('map').addLayer({
-        //     username: this.getViewModel().get('username'),
-        //     subLayers: [{
-        //         storeId: 'layer1',
-        //         table: value
-        //     }]
-        // });
         this.getStore('columns').load();
     },
     onSelectColumn: function(combo, record) {
@@ -135,8 +125,8 @@ var mapController = Ext.create('Ext.app.ViewController',{
             title: 'About Project',
             html: aboutHtml,
             modal: true,
-            width: 898,
-            height: 298,
+            width: 750,
+            height: 176,
             padding: 15,
             bodyCls: 'about'
         }).show();
@@ -181,7 +171,7 @@ Ext.onReady(function () {
                         proxy: {
                             type: 'carto',
                             mode: 'tables',
-                            username: 'crestonedigital'
+                            username: 'extjscarto'
                         },
                         listeners: {
                             load: 'catchError'
@@ -192,7 +182,7 @@ Ext.onReady(function () {
                         sorters: 'column_name',
                         proxy: {
                             type: 'carto',
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             mode: 'columns'
                         },
                         filters: [
@@ -206,6 +196,7 @@ Ext.onReady(function () {
                     },
                     numberColumns: {
                         source: '{columns}',
+                        load: Ext.emptyFn,
                         filters: [
                             function(data) {
                                 return numberTypes.indexOf(data.get('column_type')) > -1;
@@ -222,7 +213,7 @@ Ext.onReady(function () {
                             }
                         },
                         proxy: {
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             reader: {
                                 transform: function(data) {
                                     var cnt = Ext.Array.pluck(data.rows, 'cnt'),
@@ -240,7 +231,7 @@ Ext.onReady(function () {
                     }
                 },
                 data: {
-                    username: 'crestonedigital',
+                    username: 'extjscarto',
                     table: null
                 }
             },
@@ -374,7 +365,8 @@ Ext.onReady(function () {
                     xtype: 'combobox',
                     valueField: 'column_name',
                     displayField: 'column_name',
-                    labelWidth: 65,
+                    labelAlign: 'top',
+                    width: '13%',
                     editable: false,
                     listeners: {
                         select: 'onSelectColumn'
@@ -384,7 +376,8 @@ Ext.onReady(function () {
                     xtype: 'textfield',
                     reference: 'usernameField',
                     fieldLabel: 'Username',
-                    value: 'crestonedigital',
+                    value: 'extjscarto',
+                    labelWidth: 65,
                     editable: true,
                     listeners: {
                         blur: 'onSelectUsername'
@@ -439,6 +432,7 @@ Ext.onReady(function () {
                     xtype: 'button',
                     text: 'About',
                     iconCls: 'x-fa fa-question',
+                    width: '50',
                     handler: 'onAbout'
                 }]
             }

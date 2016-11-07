@@ -275,11 +275,11 @@ Ext.onReady(function () {
                     '{[this.showTotals(values.Human, values.Natural, values.Unknown)]} ',
                     '{[this.showIfExists(values.Human, values.Natural)]}',
                     'fire records collected by Federal land management agencies for fires that occurred from 1980 through 2013 in the United States.</p>',
-                    '<p>Legend:',
-                    '<br><span style="background-color:white;">|x_i - x̅| < s</span>',
-                    '<br><span style="background-color:#ffff99;">s ≤ |x_i - x̅| < 2s</span>',
-                    '<br><span style="background-color:#ff9933;">2s ≤ |x_i - x̅| < 3s</span>',
-                    '<br><span style="background-color:#ff6666; color:white;">3s ≤ |x_i - x̅|</span>',
+                    '<p>Statistics Legend:',
+                    '<br><span style="background-color:#fafafa;">Less than one standard deviation from the mean</span>',
+                    '<br><span style="background-color:#ffff99;">Between one and two standard deviations from the mean</span>',
+                    '<br><span style="background-color:#ff9933;">Between two and three standard deviations from the mean</span>',
+                    '<br><span style="background-color:#ff6666; color:white;">Greater than three standard deviations from the mean</span>',
                     '</p>',
                     {
                         showTotals: function(human, natural, unknown) {
@@ -565,6 +565,27 @@ Ext.onReady(function () {
                                 table: 'wildfire',
                                 username: 'crestonedigital',
                                 groupBy: 'year_'
+                            }
+                        }
+                    }, {
+                        reference: 'causeFilter',
+                        fieldLabel: 'Cause',
+                        valueField: 'cause',
+                        displayField: 'cause',
+                        store: {
+                            type: 'carto',
+                            storeId: 'causeStore',
+                            sorters: 'cause',
+                            fields: [{
+                                name: 'cause',
+                                convert: function(v) {
+                                    return v || 'Unknown'
+                                }
+                            }],
+                            proxy: {
+                                table: 'wildfire',
+                                username: 'crestonedigital',
+                                groupBy: 'cause'
                             }
                         }
                     }]

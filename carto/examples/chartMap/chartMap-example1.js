@@ -42,7 +42,7 @@ Ext.onReady(function () {
                             disableOnEmpty: true
                         }],
                         proxy: {
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             table: 'starwars'
                         }
                     },
@@ -62,7 +62,7 @@ Ext.onReady(function () {
                         }],
                         proxy: {
                             groupBy: 'sentiment',
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             table: 'starwars'
                         }
                     },
@@ -72,7 +72,7 @@ Ext.onReady(function () {
                         autoLoad: true,
                         proxy: {
                             groupBy: 'author_gender',
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             table: 'starwars'
                         }
                     }
