@@ -31,6 +31,7 @@ Ext.define('CartoDb.CartoStore',{
     
     remoteFilter: true,
     remoteSort: true,
+    pageSize: 0,
 
     config: {
         style: null,

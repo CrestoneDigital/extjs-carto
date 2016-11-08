@@ -25,7 +25,7 @@ Ext.define('CartoDb.CartoProxy', {
         enableData: true,
         enableBounds: false,
         enableLatLng: false,
-        // limit: null,
+        limit: null,
         subLayers: []
     },
 
@@ -59,10 +59,10 @@ Ext.define('CartoDb.CartoProxy', {
             hasGroups, index;
         
         if (pageParam && page) {
-            me.usesPaging = true;
+            console.log(page)
             params.page = page;
         }
- 
+
         if (startParam && (start || start === 0)) {
             params.start = start;
         }
@@ -70,6 +70,8 @@ Ext.define('CartoDb.CartoProxy', {
         if (limitParam && limit) {
             params.limit = limit;
         }
+
+        me.usesPaging = !!operation.getInternalScope().getPageSize();
  
         hasGroups = groupParam && grouper;
         if (hasGroups) {
