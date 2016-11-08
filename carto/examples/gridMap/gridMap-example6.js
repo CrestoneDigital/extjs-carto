@@ -12,8 +12,7 @@ var mapController = Ext.create('Ext.app.ViewController',{
     filterStore: function(combo, record){
         Ext.getStore('layer1').filter([{
             property: 'sentiment',
-            value: record.get('value'),
-            operator: 'like'
+            value: record.get('value')
         }]);
     },
     clearFilter: function(){
@@ -36,8 +35,9 @@ Ext.onReady(function () {
                         storeId: 'layer1',
                         type: 'carto',
                         autoLoad: true,
+                        pageSize: 20,
                         proxy: {
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             table: 'starwars',
                             reader: {
                                 transform: {
@@ -110,6 +110,14 @@ Ext.onReady(function () {
                 bind: {
                     store: '{layer}'
                 },
+                dockedItems: [{
+                    xtype: 'pagingtoolbar',
+                    dock: 'bottom',
+                    bind: {
+                        store: '{layer}'
+                    },
+                    displayInfo: true           
+                }],
                 columns: [{ 
                     text: 'Author Handle', 
                     dataIndex: 'author_handle', 

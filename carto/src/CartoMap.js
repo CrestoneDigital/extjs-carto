@@ -387,8 +387,8 @@ Ext.define('CartoDb.CartoMap', {
      */
     createCartoLayer: function(layer) {
         var me = this;
-        cartodb.createLayer(this.getMap(), layer.buildCartoLayer())
-        .addTo(this.getMap())
+        cartodb.createLayer(me.getMap(), layer.buildCartoLayer())
+        .addTo(me.getMap())
         .done(function(cartoLayer) {
             me.getLayer(cartoLayer.options.id).setCartoLayer(cartoLayer);
         })

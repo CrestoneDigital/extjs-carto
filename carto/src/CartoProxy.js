@@ -57,18 +57,21 @@ Ext.define('CartoDb.CartoProxy', {
             filterParam = me.getFilterParam(),
             directionParam = me.getDirectionParam(),
             hasGroups, index;
- 
+        
         if (pageParam && page) {
-            params[pageParam] = page;
+            console.log(page)
+            params.page = page;
         }
- 
+
         if (startParam && (start || start === 0)) {
-            params[startParam] = start;
+            params.start = start;
         }
  
         if (limitParam && limit) {
-            params[limitParam] = limit;
+            params.limit = limit;
         }
+
+        me.usesPaging = !!operation.getInternalScope().getPageSize();
  
         hasGroups = groupParam && grouper;
         if (hasGroups) {
@@ -157,7 +160,7 @@ Ext.define('CartoDb.CartoProxy', {
         switch (this.getMode()) {
             case 'tables': sql = this.getTablesSql; break;
             case 'columns': sql = this.getColumnsSql.replace(/{{table_name}}/g, this.getTable()); break;
-            default: sql = this.sqlBuilder( Ext.apply(me.getParams(operation), this.getCurrentConfig()) );
+            default: sql = this.sqlBuilder( operation.sqlParams = Ext.apply(me.getParams(operation), this.getCurrentConfig()) );
         }
         var params = {
             q: sql
@@ -211,6 +214,30 @@ Ext.define('CartoDb.CartoProxy', {
         this.getSubLayers().forEach(function(subLayer) {
             subLayer.setTable(table);
         });
-    }
+    },
+
+    createRequestCallback: function(request, operation) {
+        var me = this;
+        
+        return function(options, success, response) {
+            if (request === me.lastRequest) {
+                me.lastRequest = null;
+            }
+            if (me.usesPaging) {
+                Ext.Ajax.request({
+                    url: me.getUrl().replace(/{{account}}/, me.getUsername()) + '?q=' +
+                    me.sqlBuilder(Ext.apply({}, {select: ['COUNT(*)'], start: 0, limit: null, sort: null}, operation.sqlParams)),
+                    success: function(tempResponse, opts) {
+                        var res = Ext.decode(response.responseText);
+                        res.total_rows = Ext.decode(tempResponse.responseText).rows[0].count;
+                        response.responseText = Ext.encode(res);
+                        me.processResponse(success, operation, request, response);
+                    }
+                });
+            } else {
+                me.processResponse(success, operation, request, response);
+            }
+        };
+    },
 
 });

@@ -22,6 +22,13 @@ Ext.define('CartoDb.CartoLayer', {
         }
     },
 
+    updateUsername: function(newUsername, oldUsername) {
+        if (oldUsername && oldUsername !== newUsername) {
+            this.getCartoLayer().remove();
+            this.getMap().createCartoLayer(this);
+        }
+    },
+
     buildCartoLayer: function() {
         var subLayers = [];
         this.getSubLayers().forEach(function(subLayer) {

@@ -21,7 +21,7 @@ Ext.onReady(function () {
                         autoLoad: true,
                         proxy: {
                             enableLatLng: true,
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             table: 'petroleum_refineries'
                         }
                     }

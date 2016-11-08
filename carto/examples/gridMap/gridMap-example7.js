@@ -37,7 +37,7 @@ Ext.onReady(function () {
                         type: 'carto',
                         autoLoad: true,
                         proxy: {
-                            username: 'crestonedigital',
+                            username: 'extjscarto',
                             table: 'denver_service_requests',
                             reader: {
                                 transform: {
