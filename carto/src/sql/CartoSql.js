@@ -2,12 +2,19 @@ Ext.define('CartoDb.sql.CartoSql', {
     isCartoSql: true,
 
     config: {
-        sql: ''
+        sql: '',
+        hardcoded: false
     },
 
     constructor: function(config) {
         this.initConfig(config);
-        this.initSql(this.getSql());
+        var sql = this.getSql();
+        if (sql) {
+            this.setHardcoded(true);
+            this.parseSql(sql);
+        } else {
+            this.createSql();
+        }
         return this;
     },
 
@@ -16,11 +23,14 @@ Ext.define('CartoDb.sql.CartoSql', {
         return this.callParent([config]);
     },
 
-    initSql: function() {
-        this.initSql = Ext.emptyFn;
-    },
+    parseSql: Ext.emptyFn,
+    createSql: Ext.emptyFn,
 
     decode: function(config) {
         return config;
+    },
+
+    stripEnds: function(str) {
+        return str.replace(/^\s+/, '').replace(/\s+$/, '');
     }
 });

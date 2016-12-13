@@ -2,7 +2,8 @@ Ext.define('CartoDb.CartoGroupBy', {
     isGroupBy: true,
 
     config: {
-        fields: null
+        fields: null,
+        countName: 'cnt'
     },
 
     constructor: function(config) {
@@ -67,6 +68,9 @@ Ext.define('CartoDb.CartoGroupBy', {
             fields[i] = this.decodeField(fields[i]);
         }
         this.setFields(fields);
+        if (groupBy.countName) {
+            this.setCountName(groupBy.countName);
+        }
     },
     
     /**
@@ -76,10 +80,12 @@ Ext.define('CartoDb.CartoGroupBy', {
     decodeField: function(field) {
         if (!field.isField) {
             field = new Ext.data.field.Field(field);
-            if (!field.property) {
-                field.sql = this.wrapAggregate(field);
-            } else {
-                field.sql = this.wrapAggregate(field) + ' AS ' + field.name;
+            if (!field.sql) {
+                if (!field.property) {
+                    field.sql = this.wrapAggregate(field);
+                } else {
+                    field.sql = this.wrapAggregate(field) + ' AS ' + field.name;
+                }
             }
         }
         return field;

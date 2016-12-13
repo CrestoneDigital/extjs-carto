@@ -10,20 +10,32 @@ Ext.define('CartoDb.sql.CartoTable', {
 
     decode: function(config) {
         if (typeof config === 'string') {
-            config = {name: config};
+            if (/\s/.test(this.stripEnds(config))) {
+                config = {sql: config};
+            } else {
+                config = {name: config};
+            }
         }
         return config;
     },
 
-    initSql: function(sql) {
-        if (!sql) {
-            var name = this.getName(),
-                alias = this.getAlias();
-            this.setSql(name + (alias ? ' AS ' + alias : ''));
+    createSql: function() {
+        var name = this.getName(),
+            alias = this.getAlias();
+        this.setSql(name + (alias ? ' AS ' + alias : ''));
+    },
+
+    parseSql: function(sql) {
+        var parseSql = this.stripEnds(sql).split(/\s/),
+            len = parseSql.length;
+        if (len > 1) {
+            this.setAlias(parseSql[len-1]);
+        } else {
+            this.setName(parseSql[0]);
         }
     },
 
-    getIdentifier: function() {
+    getId: function() {
         return this.getAlias() || this.getName();
     }
 });

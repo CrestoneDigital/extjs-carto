@@ -9,24 +9,30 @@ Ext.define('CartoDb.CartoLayer', {
         cartoLayer: null,
         hidden: false,
         username: '',
-        subLayers: []
+        subLayers: [],
+        mapZIndex: null
     },
 
     isLayer: true,
 
     createSubLayer: function(subLayer) {
+        subLayer.publishedToLayer = true;
         if (this.getCartoLayer()) {
             this.getCartoLayer().addLayer(subLayer.buildCartoSubLayer());
-        } else {
+        } else if (this.allSubLayersReady()) {
             this.getMap().createCartoLayer(this);
         }
     },
 
-    updateUsername: function(newUsername, oldUsername) {
-        if (oldUsername && oldUsername !== newUsername) {
-            this.getCartoLayer().remove();
-            this.getMap().createCartoLayer(this);
+    allSubLayersReady: function() {
+        var subLayers = this.getSubLayers(),
+            subLayer;
+        for (subLayer in subLayers) {
+            if (!subLayers[subLayer].publishedToLayer) {
+                return false;
+            }
         }
+        return true;
     },
 
     buildCartoLayer: function() {
@@ -37,13 +43,13 @@ Ext.define('CartoDb.CartoLayer', {
         return {
             id: this.getId(),
             user_name: this.getUsername(),
+            tiler_domain: this.useCartoDb ? 'cartodb.com' : 'carto.com',
             type: 'cartodb',
             sublayers: subLayers
         };
     },
 
-    setCartoLayer: function(cartoLayer) {
-        this.callParent(arguments);
+    updateCartoLayer: function(cartoLayer) {
         if (this.getHidden()) {
             cartoLayer.hide();
         }
@@ -53,17 +59,38 @@ Ext.define('CartoDb.CartoLayer', {
         }
     },
 
+    // constructor: function(cfg) {
+    //     console.log(cfg.subLayers);
+    //     this.callParent(arguments);
+    // },
+
     initConfig: function(layer) {
         var me = this.callParent(arguments);
         me.setId(me.layerId || me.id);
         if (layer.subLayers && layer.subLayers.length) {
             layer.subLayers.forEach(function(subLayer, index) {
                 subLayer.layer = me;
-                layer.subLayers[index] = Ext.create('CartoDb.CartoSubLayer', subLayer);
-                me.getMap().addSubLayer(layer.subLayers[index]);
+                subLayer = Ext.create('CartoDb.CartoSubLayer', subLayer);
+                layer.subLayers[index] = subLayer;
+                me.getMap().addSubLayer(subLayer);
+                // subLayer.layer = me;
+                // layer.subLayers[index] = Ext.create('CartoDb.CartoSubLayer', subLayer);
+                // me.getMap().addSubLayer(layer.subLayers[index]);
             });
         }
         me.setSubLayers(layer.subLayers || []);
         return me;
+    },
+
+    lookupViewModel: function() {
+        return this.getMap().lookupViewModel();
+    },
+
+    lookupController: function() {
+        return this.getMap().lookupController();
+    },
+
+    getRefOwner: function() {
+        return this.getMap();
     }
 });

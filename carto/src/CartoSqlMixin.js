@@ -11,17 +11,23 @@ Ext.define('CartoDb.CartoSqlMixin', {
      */
     sqlBuilder: function (params, options) {
         var fields,
-            groupBy = this.getGroupBy();
+            groupBy = this.getGroupBy(),
+            table = params.table,
+            pref = table.getAlias() ? table.getAlias() + '.' : '',
+            join = params.join;
         if (groupBy) {
             if (!groupBy.isGroupBy) {
                 groupBy = Ext.create('CartoDb.CartoGroupBy', params.groupBy);
                 this.setGroupBy(groupBy);
             }
-            fields = groupBy.getSelectSql() + ',COUNT(*) AS cnt';
+            fields = groupBy.getSelectSql() + ',COUNT(*) AS ' + groupBy.getCountName();
         } else {
             fields = '*';
         }
         if (Ext.isArray(params.select)) {
+            if (options && options.isMap) {
+                this.ensureIncluded(params.select, pref + 'cartodb_id', pref + 'the_geom_webmercator');
+            }
             fields = params.select.join(',');
         }
         if (params.enableLatLng) {
@@ -30,7 +36,22 @@ Ext.define('CartoDb.CartoSqlMixin', {
         if (options && options.extraSelect) {
             fields += ',' + options.extraSelect.join(',');
         }
-        var sql = 'SELECT ' + fields + ' FROM ' + params.table + ' Where 1=1 ';
+        var sql = 'SELECT ' + fields + ' FROM ' + table.getSql();
+        var j, on = [];
+        if (join && join.length) {
+            for (var i in join) {
+                j = join[i];
+                sql += ',' + j.table.getSql();
+                if (j.on) {
+                    on.push(j.on);
+                }
+            }
+        }
+        var buster = Date.now();
+        sql += ' WHERE ' + (params.sqlCacheBuster ? buster + '=' + buster : '1=1');
+        if (on && on.length) {
+            sql += ' AND ' + on.join(' AND ');
+        }
         sql += (options && options.isMap) ? '' : this.whereClauseBuilder(params.where);
         sql += this.getFilter(params);
         sql += this.getGroupByIfExists(groupBy);
@@ -38,6 +59,23 @@ Ext.define('CartoDb.CartoSqlMixin', {
         sql += (options && options.isMap) ? '' : this.getOrder(params);
         sql += this.getPaging(params);
         return sql;
+    },
+
+    sqlFormatter: function(sql, params) {
+        this.params = params;
+        return sql.replace(/{where}/gi, function() {
+            var buster = Date.now();
+            return 'WHERE ' + (params.sqlCacheBuster ? buster + '=' + buster : '1=1') + this.getFilter(this.params);
+        }.bind(this));
+    },
+
+    ensureIncluded: function(arr) {
+        var arg;
+        for (arg = 1; arg < arguments.length; arg++) {
+            if (!arr.includes(arguments[arg])) {
+                arr.push(arguments[arg]);
+            }
+        }
     },
 
     getTablesSql: "SELECT CDB_UserTables('public') AS table_name",
@@ -55,76 +93,87 @@ Ext.define('CartoDb.CartoSqlMixin', {
             operator;
         if (tmpAr && tmpAr.length > 0) {
             tmpAr.forEach(function(rec) {
-                property = rec.getProperty();
-                value = rec.getValue();
-                operator = rec.getOperator();
-                if (property && value) {
-                    if (value instanceof RegExp) {
-                        str += ' AND ' + property + " ~* '" + value.toString().slice(1,-1) + "'";
-                    } else {
-                        var operator = (operator) ? operator : '=';
-                        switch(operator) {
-                            case 'like':
-                                str += ' AND ' + property + ' ' + operator + " '" + value + "%' ";
+                if (rec.sqlBuilder) {
+                    str += ' AND ' + rec.sqlBuilder(params);
+                } else if (rec.sql) {
+                    str += ' AND ' + rec.sql;
+                } else {
+                    property = rec.getProperty();
+                    value = rec.getValue();
+                    operator = rec.getOperator();
+                    if (property && !Ext.isEmpty(value)) {
+                        if (value instanceof RegExp) {
+                            str += ' AND ' + property + " ~* '" + value.toString().slice(1,-1) + "'";
+                        } else {
+                            var operator = (operator) ? operator : '=';
+                            switch(operator) {
+                                case 'like':
+                                    str += ' AND ' + property + ' ' + operator + " '" + value + "%' ";
+                                    break;
+                                case '=':
+                                    str += ' AND ' + property + ' ' + operator + ' ' + this.wrap(value);;
+                                    break;
+                                case 'lt':
+                                    str += ' AND ' + property + " < " + this.wrap(value);     
+                                    break;
+                                case 'gt':
+                                    str += ' AND ' + property + " > " + this.wrap(value);
+                                    break;
+                                case 'eq':
+                                    if(typeof value === 'string'){
+                                        str += ' AND ' + property + '::date  ' + " = '"  + value + "'::date";
+                                    }else{
+                                        str += ' AND ' + property + ' ' + " = "  + value;
+                                    }
+                                    break;
+                                case 'in':
+                                    if(Ext.isArray(value)) {
+                                        var temp = value.slice();
+                                        for (var i = 0; i < temp.length; i++) temp[i] = this.wrapString(temp[i]);
+                                        str += ' AND ARRAY[' + property + '] <@ ARRAY[' + temp.join(',') + ']';
+                                    }
+                                    break;
+                                case 'range':
+                                    if (Ext.isArray(value) && value.length === 2) {
+                                        if (value[0]) {
+                                            str += ' AND ' + property + ' > ' + this.wrap(value[0]);
+                                        }
+                                        if (value[1]) {
+                                            str += ' AND ' + property + ' < ' + this.wrap(value[1]);
+                                        }
+                                    }
+                                    break;
+                                case 'regex':
+                                    var validRegExp = true;
+                                    try {
+                                        new RegExp(value);
+                                    } catch (e) {
+                                        validRegExp = false;
+                                    }
+                                    if (validRegExp) {
+                                        str += ' AND ' + property + " ~* '" + value + "'";
+                                    } else {
+                                        console.error("Invalid Regular Expression '" + value + "'. Skipping.");
+                                    }
+                                    break;
+                                default:
+                                    console.warn("Unknown operator '" + operator + "'. Skipping.");
+                            }
+                        }
+                    } else if (property && operator && !rec.getDisableOnEmpty()) {
+                        switch (operator) {
+                            case 'null':
+                                str += ' AND ' + property + ' IS NULL';
                                 break;
-                            case '=':
-                                str += ' AND ' + property + ' ' + operator + " '" + value + "' ";
-                                break;
-                            case 'lt':
-                                if(typeof value === 'string'){
-                                    str += ' AND ' + property + '::date  ' + " < '" + value + "'";
-                                }else{
-                                    str += ' AND ' + property + ' ' + " < " + value;
-                                }       
-                                break;
-                            case 'gt':
-                                if(typeof value === 'string'){
-                                    str += ' AND ' + property + '::date  ' + " > '"  + value + "'::date";
-                                }else{
-                                    str += ' AND ' + property + ' ' + " > "  + value;
-                                }
-                                break;
-                            case 'eq':
-                                if(typeof value === 'string'){
-                                    str += ' AND ' + property + '::date  ' + " = '"  + value + "'::date";
-                                }else{
-                                    str += ' AND ' + property + ' ' + " = "  + value;
-                                }
-                                break;
-                            case 'in':
-                                if(Ext.isArray(value)) {
-                                    var temp = value.slice();
-                                    for (var i = 0; i < temp.length; i++) temp[i] = this.wrapString(temp[i]);
-                                    str += ' AND ARRAY[' + property + '] <@ ARRAY[' + temp.join(',') + ']';
-                                }
-                                break;
-                            case 'regex':
-                                var validRegExp = true;
-                                try {
-                                    new RegExp(value);
-                                } catch (e) {
-                                    validRegExp = false;
-                                }
-                                if (validRegExp) {
-                                    str += ' AND ' + property + " ~* '" + value + "'";
-                                } else {
-                                    console.error("Invalid Regular Expression '" + value + "'. Skipping.");
-                                }
+                            case 'notnull':
+                                str += ' AND ' + property + ' IS NOT NULL';
                                 break;
                             default:
-                                console.warn("Unknown operator '" + operator + "'. Skipping.");
+                                console.warn("Unknown operator '" + operator + "'. Skipping.")
                         }
                     }
-                } else if (property && operator && !rec.getDisableOnEmpty()) {
-                    switch (operator) {
-                        case 'notnull':
-                            str += ' AND ' + property + ' IS NOT NULL';
-                            break;
-                        default:
-                            console.warn("Unknown operator '" + operator + "'. Skipping.")
-                    }
+                    return '';
                 }
-                return '';
             }.bind(this));
         }
         return str;
@@ -232,6 +281,16 @@ Ext.define('CartoDb.CartoSqlMixin', {
     },
     wrapString: function(obj) {
         return (typeof obj === 'string') ? "'" + obj + "'" : obj;
+    },
+
+    wrap: function(obj) {
+        if (typeof obj === 'string') {
+            return "'" + obj + "'";
+        } else if (obj instanceof Date) {
+            return "'" + obj.toISOString() + "'::date";
+        } else {
+            return obj;
+        }
     },
     
     verifyGroupBy: function(){

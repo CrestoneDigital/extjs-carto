@@ -7,6 +7,7 @@ Ext.define('CartoDb.CartoSubLayer', {
         css: '',
         table: '',
         cartoSubLayer: null,
+        hidden: false,
         selection: null,
         style: null,
         interactivity: null,
@@ -72,6 +73,9 @@ Ext.define('CartoDb.CartoSubLayer', {
         var selection = this.getRecord(record.cartodb_id);
         this.setSelection(selection);
         this.getLayer().getMap().setSelection(selection);
+        if (this.hasListeners.select) {
+            this.fireEvent('select', this, selection);
+        }
     },
 
     featureOver: function() {
@@ -105,8 +109,28 @@ Ext.define('CartoDb.CartoSubLayer', {
         return this.getStore().findRecord('cartodb_id', cartodb_id);
     },
 
+    setHidden: function(hide) {
+        this.callParent(arguments);
+        var cartoSubLayer = this.getCartoSubLayer();
+        if (cartoSubLayer) {
+            if (hide) {
+                cartoSubLayer.hide();
+            } else {
+                cartoSubLayer.show();
+            }
+        }
+    },
+
     lookupViewModel: function() {
         return this.getLayer().getMap().lookupViewModel();
+    },
+
+    lookupController: function() {
+        return this.getLayer().getMap().lookupController();
+    },
+
+    getRefOwner: function() {
+        return this.getLayer().getMap();
     },
 
     initComponent: function() {
@@ -114,11 +138,14 @@ Ext.define('CartoDb.CartoSubLayer', {
         this.getBind();
     },
 
-    setStore: function(store) {
-        if (!store.isStore) {
-            store = Ext.create('CartoDb.CartoStore', store);
+    applyStore: function(store) {
+        if (store) {
+            store = Ext.StoreManager.lookup(store, 'CartoDb.CartoStore');
         }
-        this.callParent(arguments);
+        return store;
+    },
+
+    updateStore: function(store) {
         store.addSubLayerToProxy(this);
     },
 
