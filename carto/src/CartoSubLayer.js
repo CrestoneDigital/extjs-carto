@@ -77,8 +77,13 @@ Ext.define('Carto.CartoSubLayer', {
         var selection = this.getRecord(record.cartodb_id);
         this.setSelection(selection);
         this.getLayer().getMap().setSelection(selection);
+<<<<<<< HEAD
         if (this.hasListeners.itemclick) {
             this.fireEvent('itemclick', this, selection);
+=======
+        if (this.hasListeners.select) {
+            this.fireEvent('select', this, selection);
+>>>>>>> a9c1ae3784a060adeb2dde7ac8146ea0d7c88ef2
         }
     },
 
@@ -144,7 +149,11 @@ Ext.define('Carto.CartoSubLayer', {
 
     applyStore: function(store) {
         if (store) {
+<<<<<<< HEAD
             store = Ext.StoreManager.lookup(store, 'Carto.CartoStore');
+=======
+            store = Ext.StoreManager.lookup(store, 'CartoDb.CartoStore');
+>>>>>>> a9c1ae3784a060adeb2dde7ac8146ea0d7c88ef2
         }
         return store;
     },

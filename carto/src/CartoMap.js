@@ -217,7 +217,11 @@ Ext.define('Carto.CartoMap', {
     
     applyCenter: function (center) {
         if (typeof center === 'string' && center.length === 2) {
+<<<<<<< HEAD
             return this.mixins['Carto.CountryCodesLatLongISO3166'].codes[center];
+=======
+            return this.mixins['CartoDb.CountryCodesLatLongISO3166'].codes[center];
+>>>>>>> a9c1ae3784a060adeb2dde7ac8146ea0d7c88ef2
         } else if (Ext.isArray(center) && center.length === 2) {
             return center;
         }

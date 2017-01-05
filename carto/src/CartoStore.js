@@ -2,8 +2,13 @@ Ext.define('Carto.CartoStore',{
     extend: 'Ext.data.Store',
     alias: 'store.carto',
     requires: [
+<<<<<<< HEAD
         'Carto.CartoProxy',
         'Carto.sql.*'
+=======
+        'CartoDb.CartoProxy',
+        'CartoDb.sql.*'
+>>>>>>> a9c1ae3784a060adeb2dde7ac8146ea0d7c88ef2
     ],
 
     listeners: {
@@ -36,7 +41,11 @@ Ext.define('Carto.CartoStore',{
 
     applySelect: function(select) {
         if (select && !select.isCartoSelect) {
+<<<<<<< HEAD
             select = Ext.create('Carto.sql.CartoSelect', select);
+=======
+            select = Ext.create('CartoDb.sql.CartoSelect', select);
+>>>>>>> a9c1ae3784a060adeb2dde7ac8146ea0d7c88ef2
         }
         return select;
     },
