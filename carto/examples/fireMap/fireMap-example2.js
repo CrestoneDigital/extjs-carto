@@ -1,8 +1,8 @@
 Ext.Loader.setConfig({enabled: true, disableCaching: true});
-Ext.Loader.setPath('CartoDb', '../../src');
+Ext.Loader.setPath('Carto', '../../src');
 
 Ext.require([
-    'CartoDb.CartoMap',
+    'Carto.CartoMap',
     'Ext.data.Store'
 ]);
 var aboutHtml = ['<div class="about-style"><p>Data provided by <a href="http://wildfire.cr.usgs.gov/firehistory/index.html" target="_blank">The USGS Federal Fire Occurrence Website</a>.',

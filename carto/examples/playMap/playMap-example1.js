@@ -1,11 +1,11 @@
 Ext.Loader.setConfig({enabled: true, disableCaching: true});
-Ext.Loader.setPath('CartoDb', '../../src');
+Ext.Loader.setPath('Carto', '../../src');
 
 Ext.require([
-    'CartoDb.CartoMap',
-    'CartoDb.CartoStore',
-    'CartoDb.CartoProxy',
-    'CartoDb.CartoBasemaps',
+    'Carto.CartoMap',
+    'Carto.CartoStore',
+    'Carto.CartoProxy',
+    'Carto.CartoBasemaps',
     'Ext.data.Store'
 ]);
 var aboutHtml = '<div class="about-style"><img class="header_logo pull-left" height="90" width="163" src="http://www.crestonedigital.com/resources/images/crestone-digital-logo-white-lg.jpg">Here at Crestone Digital we want to allow others to visualize their data in exciting new ways. In this example, with the combined power of Ext JS and Carto, you can visualize, filter, aggregate, and style your data, just to explore the possibilities. Crestone Digital is a full service software solutions provider for all industries and would love to work with you on your next project. <a href="http://www.crestonedigital.com/" target="_blank">Visit our website to learn more</a>.</div>';
@@ -19,7 +19,7 @@ var numberTypes      = ['double precision', 'integer', 'number'];
 var mapController = Ext.create('Ext.app.ViewController',{
     init: function() {
         this.lookup('basemapBox').setStore(new Ext.data.Store({
-            data: CartoDb.CartoBasemaps.prototype.basemaps
+            data: Carto.CartoBasemaps.prototype.basemaps
         }));
     },
     initViewModel: function() {

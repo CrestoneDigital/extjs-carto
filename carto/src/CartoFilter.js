@@ -1,4 +1,4 @@
-Ext.define('CartoDb.CartoFilter', {
+Ext.define('Carto.CartoFilter', {
     extend: 'Ext.util.Filter',
 
     config: {

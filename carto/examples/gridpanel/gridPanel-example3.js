@@ -1,15 +1,15 @@
 Ext.Loader.setConfig({enabled: true, disableCaching: true});
-Ext.Loader.setPath('CartoDb', '../../src/');
+Ext.Loader.setPath('Carto', '../../src/');
 
 Ext.require([
-    'CartoDb.CartoProxy',
-    'CartoDb.CartoStore'
+    'Carto.CartoProxy',
+    'Carto.CartoStore'
 ]);
 
 Ext.onReady(function () {
     Ext.QuickTips.init();
 
-    Ext.create('CartoDb.CartoStore', {
+    Ext.create('Carto.CartoStore', {
         storeId: 'metrostopsStore',
         proxy: {
             username: 'extjscarto',
