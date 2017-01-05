@@ -1,4 +1,4 @@
-Ext.define('CartoDb.LeafletFunctionsMixin', {
+Ext.define('Carto.LeafletFunctionsMixin', {
     /**
      * @param  {integer} lat
      * @param  {integer} lng

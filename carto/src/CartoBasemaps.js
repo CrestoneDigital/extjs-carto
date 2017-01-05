@@ -1,4 +1,4 @@
-Ext.define('CartoDb.CartoBasemaps',{
+Ext.define('Carto.CartoBasemaps',{
     
     basemaps: [{
         itemId: 'positronLite',

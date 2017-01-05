@@ -1,16 +1,16 @@
 /**
  * 
  */
-Ext.define('CartoDb.CartoMap', {
+Ext.define('Carto.CartoMap', {
     extend: 'Ext.Component',
     xtype: 'cartomap',
     mixins: [
-        'CartoDb.LeafletFunctionsMixin',
-        'CartoDb.CartoProxy',
-        'CartoDb.CountryCodesLatLongISO3166',
-        'CartoDb.CartoStore',
-        'CartoDb.CartoLayer',
-        'CartoDb.CartoBasemaps'
+        'Carto.LeafletFunctionsMixin',
+        'Carto.CartoProxy',
+        'Carto.CountryCodesLatLongISO3166',
+        'Carto.CartoStore',
+        'Carto.CartoLayer',
+        'Carto.CartoBasemaps'
     ],
     config: {
         /**
@@ -47,6 +47,8 @@ Ext.define('CartoDb.CartoMap', {
          * The bounds of the `map`.
          */
         bounds: null,
+
+        zoom: 4,
 
         /**
          * @cfg {Number} minZoom
@@ -115,7 +117,8 @@ Ext.define('CartoDb.CartoMap', {
         'bounds',
         'basemap',
         'center',
-        'zoom'
+        'zoom',
+        'selection'
     ],
 
     twoWayBindable: [
@@ -125,7 +128,7 @@ Ext.define('CartoDb.CartoMap', {
     applyBasemap: function(basemap, oldBasemap) {
         if (basemap) {
             if (typeof basemap === 'string') {
-                basemap = this.mixins['CartoDb.CartoBasemaps'].getBasemapById(basemap);
+                basemap = this.mixins['Carto.CartoBasemaps'].getBasemapById(basemap);
             } else {
                 basemap = basemap.isModel ? basemap.getData() : basemap;
             }
@@ -147,31 +150,40 @@ Ext.define('CartoDb.CartoMap', {
         }
     },
 
-    applySelection: function(record) {
-        if (record) {
-            return record;
+    // applySelection: function(record) {
+    //     if (record) {
+    //         return record;
+    //     }
+    // },
+
+    applySelectedAction: function(selectedAction) {
+        if (typeof selectedAction === 'string') {
+            selectedAction = [selectedAction];
         }
+        return selectedAction;
     },
 
-    updateSelection: function(record) {
-        var selectedAction;
-        if (record.getData().lat && record.getData().lng && (selectedAction = this.getSelectedAction())) {
-            if(typeof selectedAction === 'string') {
-                this.setSelectedAction(selectedAction = [selectedAction]);
-            }
+    updateSelection: function(selection) {
+        var selectedAction = this.getSelectedAction(),
+            lat = selection.get('lat'),
+            lng = selection.get('lng');
+        if (lat && lng && selectedAction) {
             for(var i = 0; i < selectedAction.length; i++) {
                 switch (selectedAction[i]) {
                     case 'panTo':
-                    this.getMap().panTo([record.getData().lat, record.getData().lng]);
+                    this.getMap().panTo([lat, lng]);
                     break;
                     case 'placeMarker':
                     if(this._placedMarker) {
                         this.getMap().removeLayer(this._placedMarker);
                     }
-                    this._placedMarker = L.marker([record.getData().lat,record.getData().lng]).addTo(this.getMap());
+                    this._placedMarker = L.marker([lat,lng]).addTo(this.getMap());
                     break;
                 }
             }
+        }
+        if (this.hasListeners.select) {
+            this.fireEvent('select', this, selection);
         }
     },
 
@@ -182,29 +194,54 @@ Ext.define('CartoDb.CartoMap', {
     updateBounds: function(data) {
         this.fireEvent('mapBoundsUpdate');
     },
-    
-    // applyMapCenter: function (coordinates) {
-    //     var returnValue = false;
-    //     if(this.getMapCenter() && this.getMapCenter() !== coordinates){
-    //         returnValue = coordinates;
-    //     }
-    //     debugger
-    //     return returnValue;
-    // },
 
-    // updateMapCenter: function(coordinates) {
+    // updateZoom: function(zoom) {
     //     var map = this.getMap();
     //     if(map){
-    //         debugger
+    //         map.setZoom(zoom);
     //     }
-	// },
+    // },
+
+    setZoom: function(zoom) {
+        this.callParent(arguments);
+        var map = this.getMap();
+        if (map && !this._suppressNextZoom) {
+            map.setZoom(zoom);
+        }
+        this._suppressNextZoom = false;
+    },
+
+    // getZoom: function() {
+    //     return this.getMap().getZoom();
+    // },
+    
+    applyCenter: function (center) {
+        if (typeof center === 'string' && center.length === 2) {
+            return this.mixins['Carto.CountryCodesLatLongISO3166'].codes[center];
+        } else if (Ext.isArray(center) && center.length === 2) {
+            return center;
+        }
+    },
+
+    updateCenter: function(center) {
+        var map = this.getMap();
+        if(map){
+            map.panTo(center);
+        }
+	},
+
+    constructor: function(config) {
+        this.zIndex = 0;
+        this.callParent(arguments);
+    },
+
 	/**
 	 * @param  {} t
 	 * @param  {} eOpts
 	 */
 	afterRender: function(t, eOpts){
         var me = this,
-            mapCenter = (typeof me.getCenter() === 'string') ? me.mixins['CartoDb.CountryCodesLatLongISO3166'].codes[me.getCenter()] : (Array.isArray(me.getCenter())) ? me.getCenter() : [0,0];
+            mapCenter = (typeof me.getCenter() === 'string') ? me.mixins['Carto.CountryCodesLatLongISO3166'].codes[me.getCenter()] : (Array.isArray(me.getCenter())) ? me.getCenter() : [0,0];
         
         me._subLayers = {};
         me.setMap(L.map(me.getId(), {
@@ -219,12 +256,18 @@ Ext.define('CartoDb.CartoMap', {
         } else {
             me.getBasemap().addTo(me.getMap()).bringToBack();
         }
+        me.getMap().addEventListener('move', me.passEventAlong, me);
+        me.getMap().addEventListener('moveend', me.passEventAlong, me);
         me.getMap().addEventListener('moveend', me.publishMapBounds, me);
         // me.getMap().addEventListener('zoomend', me.publishMapBounds, me);
         me.getMap().addEventListener('click', function(e){
             me.fireEvent('mapClicked', me, me.getMap(), e);
         }, me);
-        me.fireEvent('mapLoaded');
+        me.getMap().addEventListener('zoomend', function(e) {
+            me._suppressNextZoom = true;
+            me.setZoom(e.target.getZoom());
+        });
+        me.fireEvent('mapLoaded', me);
         var initialLayers = me.getLayers();
         if(initialLayers.length){
             initialLayers.forEach(function(item, index){
@@ -235,7 +278,7 @@ Ext.define('CartoDb.CartoMap', {
 
     createLayer: function(config) {
         config.map = this;
-        return Ext.create('CartoDb.CartoLayer', config);
+        return Ext.create('Carto.CartoLayer', config);
     },
 
     addLayer: function(layer) {
@@ -249,6 +292,7 @@ Ext.define('CartoDb.CartoMap', {
         var layer = this.getLayer(layerId);
         if (layer && layer.getCartoLayer()) {
             layer.getCartoLayer().remove();
+            layer.destroy();
         }
     },
 
@@ -261,6 +305,13 @@ Ext.define('CartoDb.CartoMap', {
 	onResize: function(w, h, oW, oH){
 		this.getMap().invalidateSize();
 	},
+
+    passEventAlong: function(event) {
+        var e = event.type;
+        if (this.hasListener(e)) {
+            this.fireEvent(e, this, event.target);
+        }
+    },
     
     /**
      * Publishes the map's bounds to the viewModel, and updates the stores that are locked to the map.
@@ -367,6 +418,34 @@ Ext.define('CartoDb.CartoMap', {
         }
     },
 
+    validateOrder: function() {
+        var layers = this.getLayers(),
+            valid = true,
+            zIndex, diff;
+        if (layers.length > 1) {
+            layers.forEach(function(layer, idx) {
+                zIndex = layer.getMapZIndex();
+                if (zIndex !== idx) {
+                    valid = false;
+                }
+            });
+        }
+        if (!valid) {
+            this.orderLayers();
+        }
+        return valid;
+    },
+
+    orderLayers: function() {
+        // TODO: Figure out why cartodb.js is broken
+        // var layers = this.getLayers();
+        // layers.forEach(function(layer, idx) {
+        //     debugger
+        //     layer.getCartoLayer().setZIndex(idx);
+        //     layer.setMapZIndex(idx);
+        // });
+    },
+
     /**
      * Removes a layer from the map based on the layer's index.
      * @param  {integer} index
@@ -386,15 +465,28 @@ Ext.define('CartoDb.CartoMap', {
      * @param  {function} cb
      */
     createCartoLayer: function(layer) {
-        var me = this;
-        cartodb.createLayer(me.getMap(), layer.buildCartoLayer())
-        .addTo(me.getMap())
+        var me = this,
+            map = this.getMap();
+        cartodb.createLayer(map, layer.buildCartoLayer(), me.cartoOptions || {})
+        .addTo(map)
         .done(function(cartoLayer) {
-            me.getLayer(cartoLayer.options.id).setCartoLayer(cartoLayer);
+            layer = me.getLayer(cartoLayer.options.id);
+            layer.setMapZIndex(me.zIndex++);
+            layer.setCartoLayer(cartoLayer);
+            cartoLayer.on('loading', function() {
+                layer.fireEvent('beforeload', layer, me);
+            });
+            cartoLayer.on('load', function() {
+                layer.fireEvent('load', layer, me);
+            });
+            me.fireEvent('layercreated', me, layer);
+            if (me.zIndex === me.getLayers().length) {
+                me.validateOrder();
+            }
         })
         .error(function(error) {
             console.error(error);
         });
-    },
+    }
 
 });

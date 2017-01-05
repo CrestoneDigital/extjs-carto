@@ -1,10 +1,14 @@
-Ext.define('CartoDb.CartoProxy', {
+Ext.define('Carto.CartoProxy', {
     extend: 'Ext.data.proxy.Ajax',
     alias: 'proxy.carto',
-    mixins: [
-        'CartoDb.CartoSqlMixin'
+
+    requires: [
+        'Carto.sql.CartoTable'
     ],
-    alternateClassName: ['CartoDb.CartoProxy.CartoAjax'],
+    mixins: [
+        'Carto.CartoSqlMixin'
+    ],
+    alternateClassName: ['Carto.CartoProxy.CartoAjax'],
 
     reader: {
         type: 'json',
@@ -14,13 +18,16 @@ Ext.define('CartoDb.CartoProxy', {
 
     config: {
         url: "https://{{account}}.carto.com/api/v2/sql",
+        apiKey: null,
         table: '',
         select: '',
+        join: [],
         where: {},
         groupBy: null,
         orderBy: '',
         username: '',
         mode: null,
+        sqlCacheBuster: false,
         mapLock: false,
         enableData: true,
         enableBounds: false,
@@ -57,21 +64,18 @@ Ext.define('CartoDb.CartoProxy', {
             filterParam = me.getFilterParam(),
             directionParam = me.getDirectionParam(),
             hasGroups, index;
-        
+ 
         if (pageParam && page) {
-            console.log(page)
-            params.page = page;
+            params[pageParam] = page;
         }
-
+ 
         if (startParam && (start || start === 0)) {
-            params.start = start;
+            params[startParam] = start;
         }
  
         if (limitParam && limit) {
-            params.limit = limit;
+            params[limitParam] = limit;
         }
-
-        me.usesPaging = !!operation.getInternalScope().getPageSize();
  
         hasGroups = groupParam && grouper;
         if (hasGroups) {
@@ -98,23 +102,41 @@ Ext.define('CartoDb.CartoProxy', {
             }
  
         }
- 
+
         if (filterParam && filters && filters.length > 0) {
             // We do not want to send the filters as a parameter, as they will be added into the query
-            params[filterParam] = filters;
+            params.filter = filters;
         }
  
         return params;
     },
 
+    joinTable: function(joinTable) {
+        if (!joinTable.table.isCartoTable) {
+            joinTable.table = Ext.create('Carto.sql.CartoTable', joinTable.table);
+        }
+        this.getJoin().push(joinTable);
+    },
+
+    removeJoin: function(joinName) {
+        var join = this.getJoin(),
+            j;
+        for (var i in join) {
+            j = join[i];
+            if (j.table.getId() === joinName) {
+                delete join.splice(i, 1);
+            }
+        }
+    },
+
     /**
-     * Adds a field to the proxy's {@link CartoDb.CartoGroupBy}. This will create a groupBy object if one does not exist.
+     * Adds a field to the proxy's {@link Carto.CartoGroupBy}. This will create a groupBy object if one does not exist.
      * @param  {Ext.data.field.Field/Object} field
      */
     addGroupByField: function(field) {
         var groupBy = this.getGroupBy();
         if (!groupBy) {
-            groupBy = Ext.create('CartoDb.CartoGroupBy', field);
+            groupBy = Ext.create('Carto.CartoGroupBy', field);
         } else {
             groupBy.addField(field);
         }
@@ -122,12 +144,16 @@ Ext.define('CartoDb.CartoProxy', {
     },
 
     addSubLayer: function(subLayer, load) {
-        subLayer.setTable(this.getTable());
+        subLayer.setTable(this.getTable().getId());
         subLayer.getLayer().setUsername(this.getUsername());
         this.subLayers.push(subLayer);
         if (load && this._cachedSql) {
             subLayer.create(this._cachedSql);
         }
+    },
+
+    setSql: function(sql) {
+        this.sql = sql;
     },
 
     /**
@@ -138,6 +164,9 @@ Ext.define('CartoDb.CartoProxy', {
      */
     buildUrl: function(request) {
         var url = this.getUrl();
+        if (this.useCartoDb) {
+            url = "https://{{account}}.cartodb.com/api/v2/sql";
+        }
         url = url.replace(/{{account}}/, this.getUsername());
         if (this.getNoCache()) {
             url = Ext.urlAppend(url, Ext.String.format("{0}={1}", this.getCacheString(), Ext.Date.now()));
@@ -156,17 +185,21 @@ Ext.define('CartoDb.CartoProxy', {
     buildRequest: function(operation) {
         var me = this,
             subLayers = this.getSubLayers(),
+            sqlParams = Ext.apply(me.getParams(operation), this.getCurrentConfig()),
             request, operationId, idParam, sql;
         switch (this.getMode()) {
             case 'tables': sql = this.getTablesSql; break;
             case 'columns': sql = this.getColumnsSql.replace(/{{table_name}}/g, this.getTable()); break;
-            default: sql = this.sqlBuilder( operation.sqlParams = Ext.apply(me.getParams(operation), this.getCurrentConfig()) );
+            default: sql = this.sql ? this.sqlFormatter(this.sql, sqlParams) : this.sqlBuilder(sqlParams);
         }
         var params = {
             q: sql
         };
+        if (this.getApiKey()) {
+            params.api_key = this.getApiKey();
+        }
         if (subLayers.length) {
-            sql = this.sqlBuilder(Ext.apply(me.getParams(operation), this.getCurrentConfig()), {isMap: true});
+            sql = this.sql ? sql : this.sqlBuilder(sqlParams, {isMap: true});
             if (sql !== me._cachedSql) {
                 subLayers.forEach(function(subLayer) {
                     subLayer.create(sql);
@@ -202,42 +235,72 @@ Ext.define('CartoDb.CartoProxy', {
         return request;
     },
 
-    setUsername: function(username) {
-        this.callParent(arguments);
+    doRequest: function(operation) {
+        var me = this,
+            writer  = me.getWriter(),
+            request = me.buildRequest(operation),
+            method  = me.getMethod(request),
+            jsonData, params;
+        
+        // EDIT
+        // If the onlyTiles flag is enabled, then buildRequest has done all the work we needed done.
+        if (operation.onlyTiles) {
+            return null;
+        }
+        // END EDIT
+
+        if (writer && operation.allowWrite()) {
+            request = writer.write(request);
+        }
+        
+        request.setConfig({
+            binary              : me.getBinary(),
+            headers             : me.getHeaders(),
+            timeout             : me.getTimeout(),
+            scope               : me,
+            callback            : me.createRequestCallback(request, operation),
+            method              : method,
+            useDefaultXhrHeader : me.getUseDefaultXhrHeader(),
+            disableCaching      : false // explicitly set it to false, ServerProxy handles caching 
+        });
+        
+        if (method.toUpperCase() !== 'GET' && me.getParamsAsJson()) {
+            params = request.getParams();
+ 
+            if (params) {
+                jsonData = request.getJsonData();
+                if (jsonData) {
+                    jsonData = Ext.Object.merge({}, jsonData, params);
+                } else {
+                    jsonData = params;
+                }
+                request.setJsonData(jsonData);
+                request.setParams(undefined);
+            }
+        }
+        
+        if (me.getWithCredentials()) {
+            request.setWithCredentials(true);
+            request.setUsername(me.getUsername());
+            request.setPassword(me.getPassword());
+        }
+        return me.sendRequest(request);
+    },
+
+    updateUsername: function(username) {
         this.getSubLayers().forEach(function(subLayer) {
             subLayer.getLayer().setUsername(username);
         });
     },
 
     setTable: function(table) {
-        this.callParent(arguments);
+        if (!table.isCartoTable) {
+            table = Ext.create('Carto.sql.CartoTable', table);
+        }
+        this.callParent([table]);
         this.getSubLayers().forEach(function(subLayer) {
-            subLayer.setTable(table);
+            subLayer.setTable(table.getId());
         });
-    },
-
-    createRequestCallback: function(request, operation) {
-        var me = this;
-        
-        return function(options, success, response) {
-            if (request === me.lastRequest) {
-                me.lastRequest = null;
-            }
-            if (me.usesPaging) {
-                Ext.Ajax.request({
-                    url: me.getUrl().replace(/{{account}}/, me.getUsername()) + '?q=' +
-                    me.sqlBuilder(Ext.apply({}, {select: ['COUNT(*)'], start: 0, limit: null, sort: null}, operation.sqlParams)),
-                    success: function(tempResponse, opts) {
-                        var res = Ext.decode(response.responseText);
-                        res.total_rows = Ext.decode(tempResponse.responseText).rows[0].count;
-                        response.responseText = Ext.encode(res);
-                        me.processResponse(success, operation, request, response);
-                    }
-                });
-            } else {
-                me.processResponse(success, operation, request, response);
-            }
-        };
-    },
+    }
 
 });

@@ -1,4 +1,4 @@
-Ext.define('CartoDb.CartoDataModel', {
+Ext.define('Carto.CartoDataModel', {
     extend: 'Ext.data.Model',
     idProperty: 'cartodb_id',
     fields: [
