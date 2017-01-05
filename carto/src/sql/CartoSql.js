@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 Ext.define('Carto.sql.CartoSql', {
-=======
-Ext.define('CartoDb.sql.CartoSql', {
->>>>>>> a9c1ae3784a060adeb2dde7ac8146ea0d7c88ef2
     isCartoSql: true,
 
     config: {

@@ -3,11 +3,7 @@ Ext.define('Carto.CartoProxy', {
     alias: 'proxy.carto',
 
     requires: [
-<<<<<<< HEAD
         'Carto.sql.CartoTable'
-=======
-        'CartoDb.sql.CartoTable'
->>>>>>> a9c1ae3784a060adeb2dde7ac8146ea0d7c88ef2
     ],
     mixins: [
         'Carto.CartoSqlMixin'
@@ -117,11 +113,7 @@ Ext.define('Carto.CartoProxy', {
 
     joinTable: function(joinTable) {
         if (!joinTable.table.isCartoTable) {
-<<<<<<< HEAD
             joinTable.table = Ext.create('Carto.sql.CartoTable', joinTable.table);
-=======
-            joinTable.table = Ext.create('CartoDb.sql.CartoTable', joinTable.table);
->>>>>>> a9c1ae3784a060adeb2dde7ac8146ea0d7c88ef2
         }
         this.getJoin().push(joinTable);
     },
@@ -303,11 +295,7 @@ Ext.define('Carto.CartoProxy', {
 
     setTable: function(table) {
         if (!table.isCartoTable) {
-<<<<<<< HEAD
             table = Ext.create('Carto.sql.CartoTable', table);
-=======
-            table = Ext.create('CartoDb.sql.CartoTable', table);
->>>>>>> a9c1ae3784a060adeb2dde7ac8146ea0d7c88ef2
         }
         this.callParent([table]);
         this.getSubLayers().forEach(function(subLayer) {
