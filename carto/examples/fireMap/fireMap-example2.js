@@ -148,6 +148,7 @@ Ext.onReady(function () {
                         type: 'carto',
                         storeId: 'layer1',
                         autoLoad: true,
+                        onlyTiles: true,
                         proxy: {
                             username: 'crestonedigital',
                             table: 'wildfire'
@@ -239,10 +240,10 @@ Ext.onReady(function () {
                     layers: [{
                         subLayers: [{
                             subLayerId: 'firesLayer',
+                            reference: 'testRef',
+                            publishes: ['css'],
                             bind: '{layer}',
-                            style: {
-                                css: allFiresCss
-                            }
+                            css: allFiresCss
                         }]
                     }]
                 }],

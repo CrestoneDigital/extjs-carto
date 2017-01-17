@@ -12,8 +12,8 @@ var dataStore = Ext.create('Ext.data.Store',{
         name: 'Petroleum Refineries',
         value: 'petroleum_refineries',
         mapLayer: {
+            layerId: 'petroleumLayer',
             subLayers: [{
-                subLayerId: 'petroleumLayer',
                 store: {
                     autoLoad: true,
                     proxy: {
@@ -35,7 +35,7 @@ var mapController = Ext.create('Ext.app.ViewController',{
         this.lookup('removeButton').enable();
     },
     removeMapLayer: function(button, e, eOpts) {
-        this.lookup('map').removeSubLayer('petroleumLayer');
+        this.lookup('map').removeLayer('petroleumLayer', true);
         this.lookup('combo').reset();
         button.disable();
     }

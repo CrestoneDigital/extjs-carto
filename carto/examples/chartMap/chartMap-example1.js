@@ -108,23 +108,23 @@ Ext.onReady(function () {
                             },
                             fields: ['text']
                         },
-                        style: {
-                            css:    "#layer {" +
-                                    "  marker-line-width: 1;" +
-                                    "  marker-line-color: #FFF;" +
-                                    "  marker-line-opacity: 1;" +
-                                    "  marker-width: 7;" +
-                                    "  marker-fill: gray;" +
-                                    "  marker-fill-opacity: 0.9;" +
-                                    "  marker-allow-overlap: true;" +
-                                    "}" +
-                                    "#layer [sentiment = 'pos'] {" +
-                                    "   marker-fill: blue;" +
-                                    "}" +
-                                    "#layer [sentiment = 'neg'] {" +
-                                    "   marker-fill: red;" +
-                                    "}"
-                        }
+                        css: [
+                            "#layer {",
+                            "  marker-line-width: 1;",
+                            "  marker-line-color: #FFF;",
+                            "  marker-line-opacity: 1;",
+                            "  marker-width: 7;",
+                            "  marker-fill: gray;",
+                            "  marker-fill-opacity: 0.9;",
+                            "  marker-allow-overlap: true;",
+                            "}",
+                            "#layer [sentiment = 'pos'] {",
+                            "   marker-fill: blue;",
+                            "}",
+                            "#layer [sentiment = 'neg'] {",
+                            "   marker-fill: red;",
+                            "}"
+                        ]
                     }]
                 }]
             }, {

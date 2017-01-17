@@ -2,7 +2,7 @@
     /**
      * The name of the package.
      */
-    "name": "cartoDb",
+    "name": "carto",
 
     /**
      * Alternate names for this package.
@@ -16,7 +16,7 @@
       * As a general rule, all classes that belong to this package should be under this namespace
       * if multiple namespaces are part of this package, set this to "".
       */
-     "namespace": "cartoDb",
+     "namespace": "carto",
 
     /**
      * The package type.
@@ -114,15 +114,15 @@
     "sass" : {
         /**
          * The namespace to which this package's SASS corresponds. The default value of
-         * "cartoDb" means that the files in ./sass/src (and ./sass/var) match classes in
-         * the cartoDb" root namespace. In other words, "cartoDb.panel.Panel" maps to
+         * "carto" means that the files in ./sass/src (and ./sass/var) match classes in
+         * the carto" root namespace. In other words, "carto.panel.Panel" maps to
          * ./sass/src/panel/Panel.scss.
          *
          * To style classes from any namespace, set this to blank. If this is blank,
-         * then to style "cartoDb.panel.Panel" you would put SASS in
-         * ./sass/src/cartoDb/panel/Panel.scss.
+         * then to style "carto.panel.Panel" you would put SASS in
+         * ./sass/src/carto/panel/Panel.scss.
          */
-        "namespace": "cartoDb",
+        "namespace": "carto",
 
         /**
          * Comma-separated list of files or folders containing extra Sass. These

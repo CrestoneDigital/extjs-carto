@@ -16,6 +16,7 @@ var dataTextStore = Ext.create('Ext.data.Store',{
         toYear: '2013'
     }]
 });
+
 var txtTpl = new Ext.XTemplate(
     '<tpl for=".">',
         '<h2>{title}</h2>',
@@ -39,41 +40,41 @@ var dataStore = Ext.create('Ext.data.Store',{
                         table: 'wildfire'
                     }
                 },
-                style: {
-                    css: ['#wildfire{',
-                            'marker-fill-opacity: 0.05;',
-                            'marker-line-color: #FFF;',
-                            'marker-line-width: 0.0;',
-                            'marker-line-opacity: 1;',
-                            'marker-placement: point;',
-                            'marker-type: ellipse;',
-                            'marker-width: 6;',
-                            'marker-fill: #FF5C00;',
-                            'marker-allow-overlap: true;',
-                        '}',
-                        '#wildfire [zoom <18]{',
-                            'marker-fill-opacity: 0.7;',
-                        '}',
-                        '#wildfire [zoom <9]{',
-                            'marker-fill-opacity: 0.4;',
-                            'marker-width: 5;',
-                        '}',
-                        '#wildfire [zoom <8]{',
-                            'marker-fill-opacity: 0.2;',
-                            'marker-width: 4;',
-                        '}',
-                        '#wildfire [zoom <7]{',
-                            'marker-fill-opacity: 0.08;',
-                            'marker-width: 3;',
-                        '}',
-                        '#wildfire [zoom <6]{',
-                            'marker-fill-opacity: 0.07;',
-                            'marker-width: 2;',
-                        '}',
-                        '#wildfire [zoom <5]{',
-                            'marker-width: 1;',
-                        '}'].join(' ')
-                }
+                css: [
+                    '#wildfire{',
+                        'marker-fill-opacity: 0.05;',
+                        'marker-line-color: #FFF;',
+                        'marker-line-width: 0.0;',
+                        'marker-line-opacity: 1;',
+                        'marker-placement: point;',
+                        'marker-type: ellipse;',
+                        'marker-width: 6;',
+                        'marker-fill: #FF5C00;',
+                        'marker-allow-overlap: true;',
+                    '}',
+                    '#wildfire [zoom <18]{',
+                        'marker-fill-opacity: 0.7;',
+                    '}',
+                    '#wildfire [zoom <9]{',
+                        'marker-fill-opacity: 0.4;',
+                        'marker-width: 5;',
+                    '}',
+                    '#wildfire [zoom <8]{',
+                        'marker-fill-opacity: 0.2;',
+                        'marker-width: 4;',
+                    '}',
+                    '#wildfire [zoom <7]{',
+                        'marker-fill-opacity: 0.08;',
+                        'marker-width: 3;',
+                    '}',
+                    '#wildfire [zoom <6]{',
+                        'marker-fill-opacity: 0.07;',
+                        'marker-width: 2;',
+                    '}',
+                    '#wildfire [zoom <5]{',
+                        'marker-width: 1;',
+                    '}'
+                ].join(' ')
             }]
         }
     },{
@@ -89,16 +90,16 @@ var dataStore = Ext.create('Ext.data.Store',{
                         table: 'wildfire'
                     }
                 },
-                style: {
-                    css: ['#wildfire {'+
-                            'marker-fill-opacity: 0.9;'+
-                            'marker-line-color: #000;'+
-                            'marker-line-width: 0;'+
-                            'marker-line-opacity: 0;'+
-                            'marker-placement: point;'+
-                            'marker-type: ellipse;'+
-                            'marker-width: 6;'+
-                            'marker-allow-overlap: true;'+
+                css: [
+                    '#wildfire {'+
+                        'marker-fill-opacity: 0.9;'+
+                        'marker-line-color: #000;'+
+                        'marker-line-width: 0;'+
+                        'marker-line-opacity: 0;'+
+                        'marker-placement: point;'+
+                        'marker-type: ellipse;'+
+                        'marker-width: 6;'+
+                        'marker-allow-overlap: true;'+
                     '}'+
                     '#wildfire[cause="Human"] {'+
                             'marker-fill: #1F78B4;'+
@@ -127,8 +128,8 @@ var dataStore = Ext.create('Ext.data.Store',{
                     '}'+
                     '#wildfire [zoom <5]{'+
                         'marker-width: 1;'+
-                    '}'].join(' ')
-                }
+                    '}'
+                ].join(' ')
             }]
         }
     }]
@@ -137,16 +138,23 @@ var dataStore = Ext.create('Ext.data.Store',{
 
 var mapController = Ext.create('Ext.app.ViewController',{
     onLayerAdd: function(tag, newRecord, oldRecord){
+        var idx;
         if (newRecord.length > oldRecord.length) {
-            this.lookup('map').addLayer(dataStore.data.items[newRecord[newRecord.length - 1]].get('mapLayer'));
+            idx = this.getDiff(newRecord, oldRecord);
+            this.lookup('map').addLayer(dataStore.data.items[newRecord[idx]].get('mapLayer'));
         } else {
-            this.lookup('map').removeLayer(dataStore.data.items[oldRecord[oldRecord.length - 1]].get('mapLayer').layerId);
+            idx = this.getDiff(oldRecord, newRecord);
+            this.lookup('map').removeLayer(dataStore.data.items[oldRecord[idx]].get('mapLayer').layerId, true);
         }
     },
-    removeMapLayer: function(button, e, eOpts) {
-        this.lookup('map').removeLayerAtIndex(0);
-        this.lookup('combo').reset();
-        button.disable();
+
+    getDiff: function(arr1, arr2) {
+        for (var i = 0; i < arr1.length; i++) {
+            if (arr2.indexOf(arr1[i]) === -1) {
+                return i;
+            }
+        }
+        return null;
     }
 });
 
@@ -181,12 +189,6 @@ Ext.onReady(function () {
                 },
                 width: 350,
                 editable: false
-            },{
-                xtype: 'button',
-                text: 'Remove Layer',
-                handler: 'removeMapLayer',
-                disabled: true,
-                reference: 'removeButton'
             }]
         }]
     });

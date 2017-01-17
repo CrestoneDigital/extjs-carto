@@ -2,8 +2,7 @@ Ext.define('Carto.CartoStore',{
     extend: 'Ext.data.Store',
     alias: 'store.carto',
     requires: [
-        'Carto.CartoProxy',
-        'Carto.sql.*'
+        'Carto.CartoProxy'
     ],
 
     listeners: {

@@ -1,2 +1,2 @@
-# cartoDb - Read Me
+# carto - Read Me
 

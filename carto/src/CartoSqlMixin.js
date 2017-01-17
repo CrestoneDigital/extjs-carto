@@ -1,7 +1,8 @@
 Ext.define('Carto.CartoSqlMixin', {
 
     requires: [
-        'Carto.CartoGroupBy'
+        'Carto.CartoGroupBy',
+        'Carto.CartoFilter'
     ],
 
     /**
@@ -14,7 +15,9 @@ Ext.define('Carto.CartoSqlMixin', {
             groupBy = this.getGroupBy(),
             table = params.table,
             pref = table.getAlias() ? table.getAlias() + '.' : '',
-            join = params.join;
+            join = params.join,
+            linker = this.linker;
+
         if (groupBy) {
             if (!groupBy.isGroupBy) {
                 groupBy = Ext.create('Carto.CartoGroupBy', params.groupBy);
@@ -47,13 +50,20 @@ Ext.define('Carto.CartoSqlMixin', {
                 }
             }
         }
-        var buster = Date.now();
-        sql += ' WHERE ' + (params.sqlCacheBuster ? buster + '=' + buster : '1=1');
-        if (on && on.length) {
-            sql += ' AND ' + on.join(' AND ');
+        var buster = Date.now(),
+            where = '';
+        if (params.sqlCacheBuster) {
+            where +=  linker + buster + '=' + buster;
         }
-        sql += (options && options.isMap) ? '' : this.whereClauseBuilder(params.where);
-        sql += this.getFilter(params);
+        // sql += ' WHERE ' + (params.sqlCacheBuster ? buster + '=' + buster : '1=1');
+        if (on && on.length) {
+            where += linker + on.join(linker);
+        }
+        where += (options && options.isMap) ? '' : this.whereClauseBuilder(params.where);
+        where += this.getFilter(params);
+        if (where) {
+            sql += ' WHERE ' + where.replace(linker, '');
+        }
         sql += this.getGroupByIfExists(groupBy);
         // sql += this.getBounds(params);
         sql += (options && options.isMap) ? '' : this.getOrder(params);
@@ -299,5 +309,7 @@ Ext.define('Carto.CartoSqlMixin', {
 
     verifyOrderBy: function(){
         return true;
-    }
+    },
+
+    linker: ' AND '
 });

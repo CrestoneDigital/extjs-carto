@@ -4,21 +4,29 @@
 Ext.define('Carto.CartoMap', {
     extend: 'Ext.Component',
     xtype: 'cartomap',
+
+    requires: [
+        'Carto.CartoProxy',
+        'Carto.CartoStore',
+        'Carto.CartoLayer'
+    ],
+
     mixins: [
         'Carto.LeafletFunctionsMixin',
-        'Carto.CartoProxy',
         'Carto.CountryCodesLatLongISO3166',
-        'Carto.CartoStore',
-        'Carto.CartoLayer',
+        // 'Carto.util.LayerCollection',
         'Carto.CartoBasemaps'
     ],
+
+    isMap: true,
+
     config: {
         /**
          * @cfg {L.map} map
          * 
          * The leaflet map for this component.
          */
-		map: null,
+		cartoMap: null,
 
         /**
          * @cfg {Number} defaultMapZoom
@@ -77,7 +85,7 @@ Ext.define('Carto.CartoMap', {
          * 
          * Objects defining the layers of the `map`.
          */
-        layers: [],
+        layers: null,
 
         /**
          * @cfg {Ext.data.Model} selection
@@ -106,7 +114,9 @@ Ext.define('Carto.CartoMap', {
          * An array of storeIds to be passed the `map`'s bounds when `mapLock` is true.
          * Note that each store's proxy must be of type `carto`.
          */
-        storesToLock: null
+        storesToLock: null,
+
+        subLayers: null
 	},
     
     renderConfig: {
@@ -134,7 +144,7 @@ Ext.define('Carto.CartoMap', {
             }
             if (basemap && basemap.url) {
                 if (oldBasemap) {
-                    this.getMap().removeLayer(oldBasemap);
+                    this.getCartoMap().removeLayer(oldBasemap);
                 }
                 return L.tileLayer(basemap.url, {
                     attribution: basemap.attribution || null,
@@ -145,8 +155,8 @@ Ext.define('Carto.CartoMap', {
     },
 
     updateBasemap: function(basemap) {
-        if (this.getMap()) {
-            basemap.addTo(this.getMap()).bringToBack();
+        if (this.getCartoMap()) {
+            basemap.addTo(this.getCartoMap()).bringToBack();
         }
     },
 
@@ -163,6 +173,26 @@ Ext.define('Carto.CartoMap', {
         return selectedAction;
     },
 
+    applyLayers: function(layers, layerCollection) {
+        if (!layerCollection) {
+            layerCollection = Ext.create('Carto.util.LayerCollection', {
+                owner: this
+            });
+        }
+        layerCollection.add(layers);
+        return layerCollection;
+    },
+
+    applySubLayers: function(subLayers, subLayerCollection) {
+        if (!subLayerCollection) {
+            subLayerCollection = Ext.create('Carto.util.SubLayerCollection', {
+                owner: this
+            });
+        }
+        subLayerCollection.add(subLayers);
+        return subLayerCollection;
+    },
+
     updateSelection: function(selection) {
         var selectedAction = this.getSelectedAction(),
             lat = selection.get('lat'),
@@ -171,13 +201,13 @@ Ext.define('Carto.CartoMap', {
             for(var i = 0; i < selectedAction.length; i++) {
                 switch (selectedAction[i]) {
                     case 'panTo':
-                    this.getMap().panTo([lat, lng]);
+                    this.getCartoMap().panTo([lat, lng]);
                     break;
                     case 'placeMarker':
                     if(this._placedMarker) {
-                        this.getMap().removeLayer(this._placedMarker);
+                        this.getCartoMap().removeLayer(this._placedMarker);
                     }
-                    this._placedMarker = L.marker([lat,lng]).addTo(this.getMap());
+                    this._placedMarker = L.marker([lat,lng]).addTo(this.getCartoMap());
                     break;
                 }
             }
@@ -196,7 +226,7 @@ Ext.define('Carto.CartoMap', {
     },
 
     // updateZoom: function(zoom) {
-    //     var map = this.getMap();
+    //     var map = this.getCartoMap();
     //     if(map){
     //         map.setZoom(zoom);
     //     }
@@ -204,7 +234,7 @@ Ext.define('Carto.CartoMap', {
 
     setZoom: function(zoom) {
         this.callParent(arguments);
-        var map = this.getMap();
+        var map = this.getCartoMap();
         if (map && !this._suppressNextZoom) {
             map.setZoom(zoom);
         }
@@ -212,7 +242,7 @@ Ext.define('Carto.CartoMap', {
     },
 
     // getZoom: function() {
-    //     return this.getMap().getZoom();
+    //     return this.getCartoMap().getZoom();
     // },
     
     applyCenter: function (center) {
@@ -224,7 +254,7 @@ Ext.define('Carto.CartoMap', {
     },
 
     updateCenter: function(center) {
-        var map = this.getMap();
+        var map = this.getCartoMap();
         if(map){
             map.panTo(center);
         }
@@ -235,45 +265,66 @@ Ext.define('Carto.CartoMap', {
         this.callParent(arguments);
     },
 
+    beforeRender: function() {
+        this.callParent(arguments);
+        var layers = this.getLayers();
+        if (layers) {
+            layers.each(function(layer) {
+                layer.beforeRender();
+            });
+        }
+    },
+
+    onRender: function() {
+        this.callParent(arguments);
+        var layers = this.getLayers();
+        if (layers) {
+            layers.each(function(layer) {
+                layer.onRender(this);
+            });
+        }
+    },
+
 	/**
 	 * @param  {} t
 	 * @param  {} eOpts
 	 */
 	afterRender: function(t, eOpts){
         var me = this,
-            mapCenter = (typeof me.getCenter() === 'string') ? me.mixins['Carto.CountryCodesLatLongISO3166'].codes[me.getCenter()] : (Array.isArray(me.getCenter())) ? me.getCenter() : [0,0];
+            mapCenter = (typeof me.getCenter() === 'string') ? me.mixins['Carto.CountryCodesLatLongISO3166'].codes[me.getCenter()] : (Array.isArray(me.getCenter())) ? me.getCenter() : [0,0],
+            map;
         
-        me._subLayers = {};
-        me.setMap(L.map(me.getId(), {
+        me.setCartoMap(L.map(me.getId(), {
             scrollWheelZoom: me.getScrollWheelZoom(),
             center:          mapCenter,
             zoom:            me.getDefaultMapZoom(),
             minZoom:        me.getMinZoom(),
             maxZoom:        me.getMaxZoom()
         }));
+        map = me.getCartoMap();
         if(!me.getBasemap()){
             me.setBasemap('positronLite');
         } else {
-            me.getBasemap().addTo(me.getMap()).bringToBack();
+            me.getBasemap().addTo(me.getCartoMap()).bringToBack();
         }
-        me.getMap().addEventListener('move', me.passEventAlong, me);
-        me.getMap().addEventListener('moveend', me.passEventAlong, me);
-        me.getMap().addEventListener('moveend', me.publishMapBounds, me);
-        // me.getMap().addEventListener('zoomend', me.publishMapBounds, me);
-        me.getMap().addEventListener('click', function(e){
-            me.fireEvent('mapClicked', me, me.getMap(), e);
+        me.getCartoMap().addEventListener('move', me.passEventAlong, me);
+        me.getCartoMap().addEventListener('moveend', me.passEventAlong, me);
+        me.getCartoMap().addEventListener('moveend', me.publishMapBounds, me);
+        // me.getCartoMap().addEventListener('zoomend', me.publishMapBounds, me);
+        me.getCartoMap().addEventListener('click', function(e){
+            me.fireEvent('mapClicked', me, me.getCartoMap(), e);
         }, me);
-        me.getMap().addEventListener('zoomend', function(e) {
+        me.getCartoMap().addEventListener('zoomend', function(e) {
             me._suppressNextZoom = true;
             me.setZoom(e.target.getZoom());
         });
         me.fireEvent('mapLoaded', me);
-        var initialLayers = me.getLayers();
-        if(initialLayers.length){
-            initialLayers.forEach(function(item, index){
-                initialLayers[index] = me.createLayer(item);
-            });
-        }
+        // var initialLayers = me.getLayers();
+        // if(initialLayers.length){
+        //     initialLayers.forEach(function(item, index){
+        //         initialLayers[index] = me.createLayer(item);
+        //     });
+        // }
     },
 
     createLayer: function(config) {
@@ -282,17 +333,17 @@ Ext.define('Carto.CartoMap', {
     },
 
     addLayer: function(layer) {
-        if (!layer.isLayer) {
-            layer = this.createLayer(layer);
-        }
-        this.getLayers().push(layer);
+        this.setLayers(layer);
     },
 
-    removeLayer: function(layerId) {
-        var layer = this.getLayer(layerId);
-        if (layer && layer.getCartoLayer()) {
-            layer.getCartoLayer().remove();
-            layer.destroy();
+    removeLayer: function(layer, destroy) {
+        var layers = this.getLayers(),
+            subLayers = this.getSubLayers();
+        layer = this.getLayer(layer);
+        if (layer) {
+            subLayers.remove(layer.getSubLayers().getRange());
+            layers.remove(layer);
+            layer.remove(destroy);
         }
     },
 
@@ -303,7 +354,7 @@ Ext.define('Carto.CartoMap', {
 	 * @param  {} oH
 	 */
 	onResize: function(w, h, oW, oH){
-		this.getMap().invalidateSize();
+		this.getCartoMap().invalidateSize();
 	},
 
     passEventAlong: function(event) {
@@ -318,8 +369,8 @@ Ext.define('Carto.CartoMap', {
      * @param  {Event} event
      */
     publishMapBounds: function(event){
-        this.setBounds((event) ? event.target.getBounds() : this.getMap().getBounds());
-        var center = (event) ? event.target.getCenter() : this.getMap().getCenter();
+        this.setBounds((event) ? event.target.getBounds() : this.getCartoMap().getBounds());
+        var center = (event) ? event.target.getCenter() : this.getCartoMap().getCenter();
         this.setCenter([center.lat, center.lng]);
         if(this.getMapLock()) {
             this.updateStoresByBounds();
@@ -393,37 +444,54 @@ Ext.define('Carto.CartoMap', {
     // },
 
     addSubLayer: function(subLayer) {
-        this._subLayers[subLayer.subLayerId] = subLayer;
+        this.setSubLayers(subLayer);
+        // this.getSubLayerMap()[subLayer.subLayerId] = subLayer;
     },
 
     getSubLayer: function(subLayerId) {
-        return this._subLayers[subLayerId];
+        var subLayers = this.getSubLayers();
+        return subLayers ? subLayers.get(subLayerId) : null;
     },
 
-    getLayer: function(layerId) {
-        return this.layers[Ext.Array.pluck(this.layers, 'id').indexOf(layerId)];
+    getLayer: function(layer) {
+        if (layer && layer.isLayer) {
+            return layer;
+        } else if (typeof layer === 'string') {
+            return this.getLayers().get(layer);
+        } else {
+            return null;
+        }
     },
 
     /**
      * Removes a subLayer from the map based on the subLayer's id.
      * @param  {} subLayerId
      */
-    removeSubLayer: function(subLayerId) {
-        var subLayer;
-        if (typeof subLayerId === 'string') {
-            subLayer = this.getSubLayer(subLayerId);
-            if (subLayer) {
-                subLayer.remove();
+    removeSubLayer: function(subLayer, destroy) {
+        var subLayers = this.getSubLayers();
+        
+        if (subLayers) {
+            if (typeof subLayer === 'string') {
+                subLayer = subLayers.removeByKey(subLayer);
+            } else {
+                subLayers.remove(subLayer);
             }
         }
+        if (subLayer && subLayer.isSubLayer) {
+            subLayer.remove();
+            if (destroy) {
+                subLayer.destroy();
+            }
+        }
+        return subLayer;
     },
 
     validateOrder: function() {
         var layers = this.getLayers(),
             valid = true,
             zIndex, diff;
-        if (layers.length > 1) {
-            layers.forEach(function(layer, idx) {
+        if (layers && layers.length > 1) {
+            layers.each(function(layer, idx) {
                 zIndex = layer.getMapZIndex();
                 if (zIndex !== idx) {
                     valid = false;
@@ -454,7 +522,7 @@ Ext.define('Carto.CartoMap', {
     // removeLayerAtIndex: function(index, callback) {
     //     var layer = this.getLayers()[index];
     //     if (layer) {
-    //         this.getMap().removeLayer(layer);
+    //         this.getCartoMap().removeLayer(layer);
     //         this.getLayers().splice(index,1);
     //     }
     // },
@@ -466,11 +534,12 @@ Ext.define('Carto.CartoMap', {
      */
     createCartoLayer: function(layer) {
         var me = this,
-            map = this.getMap();
-        cartodb.createLayer(map, layer.buildCartoLayer(), me.cartoOptions || {})
+            map = this.getCartoMap(),
+            cartoCfg = layer.buildCartoLayer();
+        cartodb.createLayer(map, cartoCfg, me.cartoOptions || {})
         .addTo(map)
         .done(function(cartoLayer) {
-            layer = me.getLayer(cartoLayer.options.id);
+            layer = me.getLayer(cartoLayer.model.attributes.ext_id);
             layer.setMapZIndex(me.zIndex++);
             layer.setCartoLayer(cartoLayer);
             cartoLayer.on('loading', function() {
@@ -487,6 +556,15 @@ Ext.define('Carto.CartoMap', {
         .error(function(error) {
             console.error(error);
         });
+    },
+
+    doDestroy: function() {
+        var layers = this.getLayers();
+        if (layers) {
+            layers.each(function(layer) {
+                layer.destroy();
+            });
+        }
     }
 
 });

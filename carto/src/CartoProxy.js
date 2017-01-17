@@ -3,7 +3,11 @@ Ext.define('Carto.CartoProxy', {
     alias: 'proxy.carto',
 
     requires: [
-        'Carto.sql.CartoTable'
+        'Carto.sql.CartoField',
+        'Carto.sql.CartoFrom',
+        'Carto.sql.CartoSql',
+        'Carto.sql.CartoTable',
+        // 'Carto.util.SubLayerCollection'
     ],
     mixins: [
         'Carto.CartoSqlMixin'
@@ -33,7 +37,7 @@ Ext.define('Carto.CartoProxy', {
         enableBounds: false,
         enableLatLng: false,
         limit: null,
-        subLayers: []
+        subLayers: null
     },
 
     /**
@@ -144,11 +148,15 @@ Ext.define('Carto.CartoProxy', {
     },
 
     addSubLayer: function(subLayer, load) {
-        subLayer.setTable(this.getTable().getId());
-        subLayer.getLayer().setUsername(this.getUsername());
-        this.subLayers.push(subLayer);
+        var table = this.getTable(),
+            subLayers = this.getSubLayers();
+        if (table) {
+            subLayer.setTable(table.getId());
+        }
+        subLayer.setUsername(this.getUsername());
+        this.setSubLayers(subLayer);
         if (load && this._cachedSql) {
-            subLayer.create(this._cachedSql);
+            subLayer.setSql(this._cachedSql);
         }
     },
 
@@ -189,7 +197,7 @@ Ext.define('Carto.CartoProxy', {
             request, operationId, idParam, sql;
         switch (this.getMode()) {
             case 'tables': sql = this.getTablesSql; break;
-            case 'columns': sql = this.getColumnsSql.replace(/{{table_name}}/g, this.getTable()); break;
+            case 'columns': sql = this.getColumnsSql.replace(/{{table_name}}/g, this.getTable().getId()); break;
             default: sql = this.sql ? this.sqlFormatter(this.sql, sqlParams) : this.sqlBuilder(sqlParams);
         }
         var params = {
@@ -198,11 +206,11 @@ Ext.define('Carto.CartoProxy', {
         if (this.getApiKey()) {
             params.api_key = this.getApiKey();
         }
-        if (subLayers.length) {
+        if (subLayers) {
             sql = this.sql ? sql : this.sqlBuilder(sqlParams, {isMap: true});
             if (sql !== me._cachedSql) {
-                subLayers.forEach(function(subLayer) {
-                    subLayer.create(sql);
+                subLayers.each(function(subLayer) {
+                    subLayer.setSql(sql);
                 });
             }
         }
@@ -287,20 +295,37 @@ Ext.define('Carto.CartoProxy', {
         return me.sendRequest(request);
     },
 
-    updateUsername: function(username) {
-        this.getSubLayers().forEach(function(subLayer) {
-            subLayer.getLayer().setUsername(username);
-        });
+    applySubLayers: function(subLayers, subLayerCollection) {
+        if (!subLayerCollection) {
+            subLayerCollection = Ext.create('Carto.util.SubLayerCollection');
+        }
+        subLayerCollection.add(subLayers);
+        return subLayerCollection;
     },
 
-    setTable: function(table) {
-        if (!table.isCartoTable) {
+    updateUsername: function(username) {
+        var subLayers = this.getSubLayers();
+        if (subLayers) {
+            subLayers.each(function(subLayer) {
+                subLayer.setUsername(username);
+            }.bind(this));
+        }
+    },
+
+    applyTable: function(table) {
+        if (table && !table.isCartoTable) {
             table = Ext.create('Carto.sql.CartoTable', table);
         }
-        this.callParent([table]);
-        this.getSubLayers().forEach(function(subLayer) {
-            subLayer.setTable(table.getId());
-        });
+        return table;
+    },
+
+    updateTable: function(table) {
+        var subLayers = this.getSubLayers();
+        if (table && subLayers) {
+            subLayers.each(function(subLayer) {
+                subLayer.setTable(table.getId());
+            });
+        }
     }
 
 });

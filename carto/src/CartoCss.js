@@ -2,11 +2,14 @@ Ext.define('Carto.CartoCss', {
     isCartoCss: true,
 
     constructor: function(cfg) {
+        cfg = cfg || {};
+        if (Ext.isArray(cfg)) {
+            cfg = cfg.join('');
+        }
         if (typeof cfg === 'string') {
             this.cssString = cfg;
         } else {
-            var cfg = cfg || {},
-                type = cfg.type;
+            var type = cfg.type;
             if (type) {
                 cfg = Ext.apply({}, cfg, this.cssTypes[type]);
                 delete cfg.type;
@@ -21,12 +24,16 @@ Ext.define('Carto.CartoCss', {
     createCssString: function(obj) {
         var isCase = !!obj,
             obj = obj || this.css,
-            table, str, k, i;
+            str = '',
+            table, k, i;
+        if (obj.Map) {
+            str += this.createTorqueString(obj.Map);
+        }
         if (isCase) {
-            str = '[' + obj.condition + ']{';
+            str += '[' + obj.condition + ']{';
         } else {
             table = 'layer';
-            str = '#' + table + '{';
+            str += '#' + table + '{';
         }
         for (k in obj) {
             if (k === 'case') {
@@ -36,7 +43,7 @@ Ext.define('Carto.CartoCss', {
                 for (var i in obj[k]) {
                     str += this.createCssString(obj[k][i]);
                 }
-            } else if (k === 'condition') {
+            } else if (k === 'condition' || k === 'Map') {
 
             } else {
                 str += this.parseCss(k) + ':' + obj[k] + ';';
@@ -45,6 +52,19 @@ Ext.define('Carto.CartoCss', {
         str += '}';
         if (!isCase) {
             this.cssString = str;
+        }
+        return str;
+    },
+
+    createTorqueString: function(obj) {
+        var str = '',
+            k;
+        if (obj) {
+            str += 'Map{';
+            for (k in obj) {
+                str += '-' + this.parseCss(k) + ':' + obj[k] + ';';
+            }
+            str += '}';
         }
         return str;
     },
@@ -144,6 +164,30 @@ Ext.define('Carto.CartoCss', {
             markerAllowOverlap: true,
             markerClip: false,
             markerMultiPolicy: 'largest'
+        },
+        heatmap: {
+            Map: {
+                torqueFrameCount: 1,
+                torqueAnimationDuration: 10,
+                torqueTimeAttribute: '"contrdated"',
+                torqueAggregationFunction: '"count(cartodb_id)"',
+                torqueResolution: 8,
+                torqueDataAggregation: 'linear'
+            },
+
+            imageFilters: 'colorize-alpha(blue, cyan, lightgreen, yellow , orange, red)',
+            markerFile: 'url(http://s3.amazonaws.com/com.cartodb.assets.static/alphamarker.png)',
+            markerFillOpacity: '0.4*[value]',
+            markerWidth: 35,
+            case: [{
+                condition: 'frame-offset=1',
+                markerWidth: 37,
+                markerFillOpacity: 0.2,
+            }, {
+                condition: 'frame-offset=2',
+                markerWidth: 39,
+                markerFillOpacity: 0.1
+            }]
         }
     }
 });

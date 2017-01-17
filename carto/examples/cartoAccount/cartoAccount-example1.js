@@ -134,6 +134,7 @@ Ext.onReady(function () {
                 }
             }, {
                 reference: 'numberFieldBox',
+                queryMode: 'local',
                 bind: {
                     fieldLabel: '{table}\'s number fields',
                     store: '{numberColumns}',
