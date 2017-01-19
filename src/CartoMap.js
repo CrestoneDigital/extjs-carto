@@ -79,9 +79,9 @@ Ext.define('Carto.CartoMap', {
         mapLock: false,
 
         /**
-         * @cfg {Object[]} layers
+         * @cfg {Carto.util.LayerCollection} layers
          * 
-         * Objects defining the layers of the `map`.
+         * A collection of the layers of the `map`.
          */
         layers: null,
 

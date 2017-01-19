@@ -8,19 +8,26 @@ Native components for ExtJS to interact with Carto map layers, data and visualiz
 
 Name | Type | Default | Description
 --- | --- | --- | ---
-`map` | [L.map] | [L.map] | The leaflet map for this component.
-`defaultMapZoom` | Number | 4 | The default zoom level of the `map`.
+`cartoMap` | [L.map] | [L.map] | The leaflet map for this component.
+`zoom` | Number | 4 | A zoom value to initialize the `cartoMap` with.
 `scrollWheelZoom` | Boolean | true | `true` to allow the map to be scrolled by the mouse wheel.
-`basemap` | String<br>Object<br>[L.tileLayer] | 'positronLite' | The basemap to be used for the `map`.
-`bounds` | [LatLngBounds] | null | The bounds of the `map`.
-`minZoom` | Number | 3 | The minimum possible zoom level of the `map`.
-`maxZoom` | Number | 18 | The maximum possible zoom level of the `map`.
-`mapLock` | Boolean | false | `true` for the map to update the filters in every store found in `storesToLock` when the `map` bounds change.
-`layers` | Object[] | [] | Objects defining the layers of the `map`.
-`selection` | [Ext.data.Model] | null | The selected record of the `map`.
+`basemap` | String<br>Object<br>[L.tileLayer] | 'positronLite' | The basemap to be used for the `cartoMap`.
+`bounds` | [LatLngBounds] | null | The bounds of the `cartoMap`.
+`minZoom` | Number | 3 | The minimum possible zoom level of the `cartoMap`.
+`maxZoom` | Number | 18 | The maximum possible zoom level of the `cartoMap`.
+`mapLock` | Boolean | false | `true` for the map to update the filters in every store found in `storesToLock` when the `cartoMap` bounds change.
+`layers` | [Carto.util.LayerCollection] | null | A collection of the layers of the `cartoMap`.
+`selection` | [Ext.data.Model] | null | The selected record of the `cartoMap`.
 `selectedAction` | String<br>String[] | null | The actions to take when a record is selected.
-`stores` | [Ext.data.Store] | null | The stores associated with each subLayer of the `map`.
-`storesToLock` | String[] | null | An array of storeIds to be passed the `map`'s bounds when `mapLock` is true.
+`stores` | [Ext.data.Store] | null | The stores associated with each subLayer of the `cartoMap`.
+`storesToLock` | String[] | null | An array of storeIds to be passed the `cartoMap`'s bounds when `mapLock` is true.
+
+### Instance Properties
+
+Name | Type | Default | Description
+--- | --- | --- | ---
+`maskWhileLoading` | Boolean | false | `true` to mask the map component while tiles are loading.
+`loadingMessage` | String | 'Loading Tiles...' | The message to display while the tiles are loading.
 
 ### Binding
 
@@ -32,12 +39,8 @@ The `map`'s selection is two-way bindable, similarly to other Extjs components. 
 {
     xtype: 'grid',
     bind: {
-        selection: '{selectedItem}'
-    },
-    listeners: {
-        afterrender: function(){
-            this.setStore(Ext.getStore('layer1'));
-        }
+        selection: '{selectedItem}',
+        store: '{sampleStore}'
     }
 }, {
     xtype: 'cartoMap',
@@ -48,8 +51,7 @@ The `map`'s selection is two-way bindable, similarly to other Extjs components. 
     layers: [{
         username: 'example_username',
         subLayers: [{
-            storeId: 'layer1',
-            table: 'example_table'
+            bind: '{sampleStore}'
         }]
     }]
 }
@@ -111,6 +113,7 @@ The `map`'s selection is two-way bindable, similarly to other Extjs components. 
 
 Name | Type | Default | Description
 --- | --- | --- | ---
+`groupBy` | [Carto.CartoGroupBy] | null | A groupBy object defining the GROUP BY clause of the `Carto.CartoProxy`'s sql.
 
 
 ## CartoProxy.js
@@ -124,32 +127,45 @@ Name | Type | Default | Description
 
 ### Basic
 
-* [Visualization of a Map in Ext JS](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example1.html)
-* [A Map centered on Japan](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example2.html)
-* [A Map with a simple Carto layer](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example3.html)
-* [A Map whose layers can be added and removed](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/basicMap/basicMap-example4.html)
+* [Visualization of a Map in Ext JS](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/basicMap/basicMap-example1.html)
+* [A Map centered on Japan](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/basicMap/basicMap-example2.html)
+* [A Map with a simple Carto layer](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/basicMap/basicMap-example3.html)
+* [A Map whose layers can be added and removed](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/basicMap/basicMap-example4.html)
 
 ### Grid/Map
 
-* [Grid and Map bound to Carto Store](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example1.html)
-* [Map with hidden layer and multiple selected actions](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example2.html)
-* [Grid locked to Map bounds (with tooltip)](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example3.html)
-* [Grid and Map with filter options](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example4.html)
-* [Grid and Map with auto filter options](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example5.html)
-* [Grid and Map with combo filter](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example6.html)
-* [Grid and Map with combo filter](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/gridMap/gridMap-example7.html)
+* [Grid and Map bound to Carto Store](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/gridMap/gridMap-example1.html)
+* [Map with hidden layer and multiple selected actions](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/gridMap/gridMap-example2.html)
+* [Grid locked to Map bounds (with tooltip)](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/gridMap/gridMap-example3.html)
+* [Grid and Map with filter options](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/gridMap/gridMap-example4.html)
+* [Grid and Map with auto filter options](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/gridMap/gridMap-example5.html)
+* [Grid and Map with combo filter](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/gridMap/gridMap-example6.html)
+* [Grid and Map with combo filter](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/gridMap/gridMap-example7.html)
 
 ### Carto Account
 
-* [Carto Stores with tables and columns](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/cartoAccount/cartoAccount-example1.html)
+* [Carto Stores with tables and columns](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/cartoAccount/cartoAccount-example1.html)
+
+### Chart/Map
+
+* [Chart and Map filtered by text input](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/chartMap/chartMap-example1.html)
+
+### Layer Demos
+
+* [Demonstration of multiply layer types (point, polygon, heatmap, torque)](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/layerDemo/layerDemo-example1.html)
 
 ### Store Binding
 
-* [Grid and two Maps bound to one Carto Store](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/storeBinding/storeBinding-example1.html)
+* [Grid and two Maps bound to one Carto Store](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/storeBinding/storeBinding-example1.html)
 
-### [Wildfire Exploration](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/fireMap/fireMap-example2.html)
+### Fire Map
 
-### [Carto Map Explorer](http://rawgit.com/CrestoneDigital/extjs-carto/master/carto/examples/playMap/playMap-example1.html)
+* [Wildfire Map with two styled layers](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/fireMap/fireMap-example1.html)
+* [Wildfire Map with styled layer and heatmap layer](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/fireMap/fireMap-example3.html)
+
+### [Wildfire Exploration](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/fireMap/fireMap-example2.html)
+
+### [Carto Map Explorer](http://rawgit.com/CrestoneDigital/extjs-carto/master/examples/playMap/playMap-example1.html)
 
 
 [Ext.data.Model]: http://docs.sencha.com/extjs/6.2.0/classic/Ext.data.Model.html

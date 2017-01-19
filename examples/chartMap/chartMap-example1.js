@@ -1,5 +1,6 @@
 Ext.Loader.setConfig({enabled: true, disableCaching: true});
-Ext.Loader.setPath('Carto', '../../src/');
+Ext.Loader.setPath('Carto', '../../src');
+Ext.Loader.setPath('ext', '../../../ext');
 
 Ext.require([
     'Carto.CartoMap',

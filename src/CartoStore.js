@@ -7,25 +7,25 @@ Ext.define('Carto.CartoStore',{
 
     isCartoStore: true,
 
-    listeners: {
-        filterchange: function(store, filters) {
-            var storeConfig    = this.getProxy().getCurrentConfig();
-            storeConfig.filter = [];
-            filters.forEach(function(item){
-                storeConfig.filter.push({
-                    operator: (item._operator) ? item._operator : "like", 
-                    value: (item._convert) ? item._value.toLocaleDateString() :item._value, 
-                    property: item._property
-                });
-            }.bind(this));
-            // if(this._subLayer){
-            //     this._subLayer.setSQL(this.sqlBuilder(storeConfig));
-            // }
-            if(this._layer){
-                this._layer.setSQL(this.sqlBuilder(storeConfig));
-            }
-        }
-    },
+    // listeners: {
+    //     filterchange: function(store, filters) {
+    //         var storeConfig    = this.getProxy().getCurrentConfig();
+    //         storeConfig.filter = [];
+    //         filters.forEach(function(item){
+    //             storeConfig.filter.push({
+    //                 operator: (item._operator) ? item._operator : "like", 
+    //                 value: (item._convert) ? item._value.toLocaleDateString() :item._value, 
+    //                 property: item._property
+    //             });
+    //         }.bind(this));
+    //         // if(this._subLayer){
+    //         //     this._subLayer.setSQL(this.sqlBuilder(storeConfig));
+    //         // }
+    //         if(this._layer){
+    //             this._layer.setSQL(this.sqlBuilder(storeConfig));
+    //         }
+    //     }
+    // },
 
     constructor: function(config) {
         var table = config.table;
@@ -53,10 +53,7 @@ Ext.define('Carto.CartoStore',{
     remoteSort: true,
 
     config: {
-        style: null,
-        storeId: null,
         groupBy: null,
-        select: null,
         distinct: false,
         applyFilterToLayer: true,
         onlyTiles: false
