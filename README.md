@@ -193,6 +193,20 @@ Name | Type | Description
 `torque` | Carto.css.Torque | Torque style for showing time-based effects.
 `torquecat` | Carto.css.TorqueCat | Torque style with added categorical grouping.
 
+##### Example Usage
+
+```javascript
+{
+    css: {
+        type: 'point',
+        // the value config will extend, not overwrite
+        value: {
+            markerColor: 'blue'
+        }
+    }
+}
+```
+
 ## CartoStore.js
 
 ### Configs
