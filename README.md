@@ -16,7 +16,7 @@ Name | Type | Default | Description
 `minZoom` | Number | 3 | The minimum possible zoom level of the `cartoMap`.
 `maxZoom` | Number | 18 | The maximum possible zoom level of the `cartoMap`.
 `mapLock` | Boolean | false | `true` for the map to update the filters in every store found in `storesToLock` when the `cartoMap` bounds change.
-`layers` | [Carto.util.LayerCollection] | null | A collection of the layers of the `cartoMap`.
+`layers` | Carto.util.LayerCollection | null | A collection of the layers of the `cartoMap`.
 `selection` | [Ext.data.Model] | null | The selected record of the `cartoMap`.
 `selectedAction` | String<br>String[] | null | The actions to take when a record is selected.
 `stores` | [Ext.data.Store] | null | The stores associated with each subLayer of the `cartoMap`.
@@ -49,7 +49,6 @@ The `map`'s selection is two-way bindable, similarly to other Extjs components. 
     },
     basemap: 'darkMatterLite',
     layers: [{
-        username: 'example_username',
         subLayers: [{
             bind: '{sampleStore}'
         }]
@@ -123,6 +122,25 @@ Name | Type | Default | Description
 Name | Type | Default | Description
 --- | --- | --- | ---
 
+## CartoGroupBy.js
+
+This is an sql helper object for defining the GROUP BY clause in the sql.
+
+### Configs
+
+Name | Type | Default | Description
+--- | --- | --- | ---
+`fields` | Object[]<br>String[] | null | An array of field configs, in the order they should be presented in the GROUP BY clause.
+`countName` | String | 'cnt' | The name of the field that should contain the counts of the different groups.
+
+In addition, the [Carto.CartoGroupBy] object uses optional extra properties of the [Ext.data.field.Field] that are not native.
+
+Name | Type | Default | Description
+--- | --- | --- | ---
+`property` | String | undefined | Specifies the name of the column for this field, if different from the `name` of the field.
+`sql` | String | undefined | Use this to force the query to use this sql for this field. Useful for more complicated queries.
+`aggregateType` | String | undefined | An sql function for aggregating on this field. If specified, this field will not be included in the GROUP BY clause.
+
 ## Demos
 
 ### Basic
@@ -173,3 +191,5 @@ Name | Type | Default | Description
 [L.tileLayer]: http://leafletjs.com/reference.html#tilelayer
 [L.map]: http://leafletjs.com/reference.html#map-usage
 [LatLngBounds]: http://leafletjs.com/reference.html#latlngbounds
+[Carto.CartoGroupBy]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#groupbyjs
+[Ext.data.field.Field]: http://docs.sencha.com/extjs/6.2.1/classic/Ext.data.field.Field.html

@@ -80,13 +80,9 @@ Ext.define('Carto.CartoGroupBy', {
     decodeField: function(field) {
         if (!field.isField) {
             field = new Ext.data.field.Field(field);
-            if (!field.sql) {
-                if (!field.property) {
-                    field.sql = this.wrapAggregate(field);
-                } else {
-                    field.sql = this.wrapAggregate(field) + ' AS ' + field.name;
-                }
-            }
+        }
+        if (!field.sql) {
+            field.sql = this.wrapAggregate(field) + (field.property ? ' AS ' + field.name : '');
         }
         return field;
     },
