@@ -5,7 +5,7 @@ Ext.define('Carto.LeafletFunctionsMixin', {
      * @param  {integer} zoom
      */
     panTo: function(lat, lng, zoom) {
-		this.getMap().setView([lat,lng], zoom || 10);
+		this.getCartoMap().setView([lat,lng], zoom || 10);
 	},
     
     /**
@@ -13,11 +13,11 @@ Ext.define('Carto.LeafletFunctionsMixin', {
      * @param  {} options
      */
     fitBounds: function(bounds, options) {
-        this.getMap().fitBounds(bounds, options);
+        this.getCartoMap().fitBounds(bounds, options);
     },
 
     setZoom: function(zoom, options) {
-        this.getMap().setZoom(zoom, options);
+        this.getCartoMap().setZoom(zoom, options);
     },
     
     /**
@@ -25,7 +25,7 @@ Ext.define('Carto.LeafletFunctionsMixin', {
      * @param  {} options
      */
     zoomIn: function(num, options) {
-        this.getMap().zoomIn(num, options);
+        this.getCartoMap().zoomIn(num, options);
     },
     
     /**
@@ -33,67 +33,67 @@ Ext.define('Carto.LeafletFunctionsMixin', {
      * @param  {} options
      */
     zoomOut: function(num, options) {
-        this.getMap().zoomOut(num, options);
+        this.getCartoMap().zoomOut(num, options);
     },
     
     /**
      * @param  {} latLngBounds
      */
     setMaxBounds: function(latLngBounds) {
-        this.getMap().setMaxBounds(latLngBounds);
+        this.getCartoMap().setMaxBounds(latLngBounds);
     },
 
     /**
      */
     remove: function() {
-        this.getMap().remove();
+        this.getCartoMap().remove();
     },
     /**
      */
     getCenter: function() {
-        return this.getMap().getCenter();
+        return this.getCartoMap().getCenter();
     },
     /**
      */
     getZoom: function() {
-        return this.getMap().getZoom();
+        return this.getCartoMap().getZoom();
     },
     /**
      */
     getMinZoom: function() {
-        return this.getMap().getMinZoom();
+        return this.getCartoMap().getMinZoom();
     },
     /**
      */
     getMaxZoom: function() {
-        return this.getMap().getMaxZoom();
+        return this.getCartoMap().getMaxZoom();
     },
     /**
      */
     getBounds: function() {
-        return this.getMap().getBounds();
+        return this.getCartoMap().getBounds();
     },
     /**
      * @param  {} latLngBounds
      * @param  {} inside
      */
     getBoundsZoom: function(latLngBounds, inside) {
-        return this.getMap().getBoundsZoom(latLngBounds, inside);
+        return this.getCartoMap().getBoundsZoom(latLngBounds, inside);
     },
     /**
      */
     getSize: function() {
-        return this.getMap().getSize();
+        return this.getCartoMap().getSize();
     },
     /**
      */
     getPixelBounds: function() {
-        return this.getMap().getPixelBounds();
+        return this.getCartoMap().getPixelBounds();
     },
     /**
      */
     getPixelOrigin: function() {
-        return this.getMap().getPixelOrigin();
+        return this.getCartoMap().getPixelOrigin();
     }
 
  

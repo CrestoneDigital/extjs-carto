@@ -57,7 +57,7 @@ Ext.onReady(function () {
                         bind: {
                             store: '{refineries}'
                         },
-                        style: {
+                        css: {
                             type: 'intensity'
                         },
                         interactivity: {

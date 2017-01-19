@@ -31,13 +31,8 @@ Ext.define('Carto.AbstractLayer', {
 
         this.getId();
         this.initConfig(config);
-        
-        // debugger
-        // var viewModel = this.lookupViewModel();
-        // debugger
-        // if (viewModel) {
+
         this.initBindable();
-        // }
 
         delete this.layerId;
         return this;

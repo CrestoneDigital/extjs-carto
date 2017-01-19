@@ -63,33 +63,35 @@ Ext.onReady(function () {
                             layerId: 'layer',
                             css: {
                                 type: 'intensity',
-                                markerFillOpacity: 0.05,
-                                markerLineWidth: 0.0,
-                                markerWidth: 6,
-                                markerFill: '#FF5C00',
-                                case: [{
-                                    condition: 'zoom<18',
-                                    markerFillOpacity: 0.7
-                                }, {
-                                    condition: 'zoom<9',
-                                    markerFillOpacity: 0.4,
-                                    markerWidth: 5
-                                }, {
-                                    condition: 'zoom<8',
-                                    markerFillOpacity: 0.2,
-                                    markerWidth: 4
-                                }, {
-                                    condition: 'zoom<7',
-                                    markerFillOpacity: 0.08,
-                                    markerWidth: 3
-                                }, {
-                                    condition: 'zoom<6',
-                                    markerFillOpacity: 0.07,
-                                    markerWidth: 2
-                                }, {
-                                    condition: 'zoom<5',
-                                    markerWidth: 1
-                                }]
+                                value: {
+                                    markerFillOpacity: 0.05,
+                                    markerLineWidth: 0.0,
+                                    markerWidth: 6,
+                                    markerFill: '#FF5C00',
+                                    case: [{
+                                        condition: 'zoom<18',
+                                        markerFillOpacity: 0.7
+                                    }, {
+                                        condition: 'zoom<9',
+                                        markerFillOpacity: 0.4,
+                                        markerWidth: 5
+                                    }, {
+                                        condition: 'zoom<8',
+                                        markerFillOpacity: 0.2,
+                                        markerWidth: 4
+                                    }, {
+                                        condition: 'zoom<7',
+                                        markerFillOpacity: 0.08,
+                                        markerWidth: 3
+                                    }, {
+                                        condition: 'zoom<6',
+                                        markerFillOpacity: 0.07,
+                                        markerWidth: 2
+                                    }, {
+                                        condition: 'zoom<5',
+                                        markerWidth: 1
+                                    }]
+                                }
                             }
                         }
                     },

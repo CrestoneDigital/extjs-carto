@@ -13,7 +13,9 @@ Ext.define('Carto.layer.Torque', {
     ],
 
     create: function() {
-        this.getMap().createCartoLayer(this);
+        if (this.isReadyToBuild()) {
+            this.getMap().createCartoLayer(this);
+        }
     },
 
     buildCartoLayer: function() {

@@ -13,12 +13,16 @@ Ext.define('Carto.layer.LayerGroup', {
     },
 
     createCartoSubLayer: function(subLayer) {
-        subLayer.publishedToLayer = true;
+        if (this.isCreating) {
+            return;
+        }
+        this.isCreating = true;
         if (this.getCartoLayer()) {
             this.getCartoLayer().addLayer(subLayer.buildCartoLayer());
         } else if (this.allSubLayersReady()) {
             this.getMap().createCartoLayer(this);
         }
+        delete this.isCreating;
     },
 
     allSubLayersReady: function() {
@@ -26,8 +30,9 @@ Ext.define('Carto.layer.LayerGroup', {
             allReady = true;
         if (subLayers) {
             subLayers.each(function(subLayer) {
-                if (!subLayer.publishedToLayer) {
+                if (!subLayer.isReadyToBuild()) {
                     allReady = false;
+                    return false;
                 }
             });
         } else {

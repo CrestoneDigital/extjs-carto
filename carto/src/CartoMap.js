@@ -29,13 +29,6 @@ Ext.define('Carto.CartoMap', {
 		cartoMap: null,
 
         /**
-         * @cfg {Number} defaultMapZoom
-         * 
-         * The default zoom level of the `map`.
-         */
-        defaultMapZoom: 4,
-
-        /**
          * @cfg {Boolean} scrollWheelZoom
          * 
          * `true` to allow the map to be scrolled by the mouse wheel.
@@ -56,6 +49,11 @@ Ext.define('Carto.CartoMap', {
          */
         bounds: null,
 
+        /**
+         * @cfg {Number} zoom
+         * 
+         * A zoom value to initialize the `map` with.
+         */
         zoom: 4,
 
         /**
@@ -114,12 +112,59 @@ Ext.define('Carto.CartoMap', {
          * An array of storeIds to be passed the `map`'s bounds when `mapLock` is true.
          * Note that each store's proxy must be of type `carto`.
          */
-        storesToLock: null,
-
-        maskWhileLoading: false,
-
-        loadingMessage: 'Loading Tiles...'
+        storesToLock: null
 	},
+
+    // <editor-fold desc="Properties"> 
+    // *********************************************************************************** 
+    // Begin Properties 
+    // ***********************************************************************************
+
+    maskWhileLoading: false,
+
+    loadingMessage: 'Loading Tiles...',
+
+    eventRelayers: {
+        baselayerchange: true,
+        overlayadd: true,
+        overlayremove: true,
+        layeradd: true,
+        layerremove: true,
+        zoomlevelschange: true,
+        resize: true,
+        unload: true,
+        viewreset: true,
+        load: true,
+        zoomstart: true,
+        movestart: true,
+        zoom: true,
+        move: true,
+        zoomend: true,
+        moveend: true,
+        popupopen: true,
+        popupclose: true,
+        autopanstart: true,
+        tooltipopen: true,
+        tooltipclose: true,
+        click: true,
+        dblclick: true,
+        mousedown: true,
+        mouseup: true,
+        mouseover: true,
+        mouseout: true,
+        mousemove: true,
+        contextmenu: true,
+        keypress: true,
+        preclick: true,
+        zoomanim: true,
+        locationerror: true,
+        locationfound: true
+    },
+
+    // *********************************************************************************** 
+    // End Properties 
+    // *********************************************************************************** 
+    // </editor-fold> 
     
     renderConfig: {
         center: [40, -95]
@@ -161,12 +206,6 @@ Ext.define('Carto.CartoMap', {
             basemap.addTo(this.getCartoMap()).bringToBack();
         }
     },
-
-    // applySelection: function(record) {
-    //     if (record) {
-    //         return record;
-    //     }
-    // },
 
     applySelectedAction: function(selectedAction) {
         if (typeof selectedAction === 'string') {
@@ -267,25 +306,27 @@ Ext.define('Carto.CartoMap', {
         this.callParent(arguments);
     },
 
-    // beforeRender: function() {
-    //     this.callParent(arguments);
-    //     var layers = this.getLayers();
-    //     if (layers) {
-    //         layers.each(function(layer) {
-    //             layer.beforeRender();
-    //         });
-    //     }
-    // },
+    createEventRelayers: function() {
+        var C = Ext.Config,
+            createdEvents = this._createdEvents || {},
+            relayers = this.eventRelayers,
+            listeners = this.hasListeners,
+            map = this.getCartoMap(),
+            key;
 
-    // onRender: function() {
-    //     this.callParent(arguments);
-    //     var layers = this.getLayers();
-    //     if (layers) {
-    //         layers.each(function(layer) {
-    //             layer.onRender(this);
-    //         });
-    //     }
-    // },
+        for (key in listeners) {
+            if (key in relayers && !(key in createdEvents)) {
+                createdEvents[key] = true;
+                map.addEventListener(key, this.createEventRelayer(key));
+            }
+        }
+    },
+
+    createEventRelayer: function(name) {
+        return function(e) {
+            this.fireEvent(name, this, e);
+        }.bind(this);
+    },
 
 	/**
 	 * @param  {} t
@@ -293,40 +334,37 @@ Ext.define('Carto.CartoMap', {
 	 */
 	afterRender: function(t, eOpts){
         var me = this,
-            mapCenter = (typeof me.getCenter() === 'string') ? me.mixins['Carto.CountryCodesLatLongISO3166'].codes[me.getCenter()] : (Array.isArray(me.getCenter())) ? me.getCenter() : [0,0],
             map;
         
         me.setCartoMap(L.map(me.getId(), {
             scrollWheelZoom: me.getScrollWheelZoom(),
-            center:          mapCenter,
-            zoom:            me.getDefaultMapZoom(),
-            minZoom:        me.getMinZoom(),
-            maxZoom:        me.getMaxZoom()
+            center:          me.getCenter(),
+            zoom:            me.getZoom(),
+            minZoom:         me.getMinZoom(),
+            maxZoom:         me.getMaxZoom()
         }));
+
+        me.createEventRelayers();
+
         map = me.getCartoMap();
         if(!me.getBasemap()){
             me.setBasemap('positronLite');
         } else {
-            me.getBasemap().addTo(me.getCartoMap()).bringToBack();
+            me.getBasemap().addTo(map).bringToBack();
         }
-        me.getCartoMap().addEventListener('move', me.passEventAlong, me);
-        me.getCartoMap().addEventListener('moveend', me.passEventAlong, me);
-        me.getCartoMap().addEventListener('moveend', me.publishMapBounds, me);
-        // me.getCartoMap().addEventListener('zoomend', me.publishMapBounds, me);
-        me.getCartoMap().addEventListener('click', function(e){
-            me.fireEvent('mapClicked', me, me.getCartoMap(), e);
-        }, me);
-        me.getCartoMap().addEventListener('zoomend', function(e) {
+        // map.addEventListener('move', me.passEventAlong, me);
+        // map.addEventListener('moveend', me.passEventAlong, me);
+        map.addEventListener('moveend', me.publishMapBounds, me);
+        // map.addEventListener('zoomend', me.publishMapBounds, me);
+        // map.addEventListener('click', function(e){
+        //     me.fireEvent('mapClicked', me, map, e);
+        // }, me);
+        map.addEventListener('zoomend', function(e) {
             me._suppressNextZoom = true;
             me.setZoom(e.target.getZoom());
         });
-        me.fireEvent('mapLoaded', me);
-        // var initialLayers = me.getLayers();
-        // if(initialLayers.length){
-        //     initialLayers.forEach(function(item, index){
-        //         initialLayers[index] = me.createLayer(item);
-        //     });
-        // }
+        me.fireEvent('mapload', me);
+
         me.flushSchedule();
     },
 
@@ -431,31 +469,9 @@ Ext.define('Carto.CartoMap', {
     },
 
     /**
-     * Adds a layer to the map.
-     * @param  {object} data
-     * @param  {function} callback
+     * Gets the layer based on its id.
+     * @param  {String} layer
      */
-    // addLayer: function(data, callback) {
-    //     this.setStores(this.createDataStores(data));
-    //     this.createLayer(data, function(err, layer){
-    //         if(err) {
-    //             console.log('Error: ' + err);
-    //         }else{
-    //             return callback ? callback(null, layer) : null;
-    //         }
-    //     });
-    // },
-
-    // addSubLayer: function(subLayer) {
-    //     this.setSubLayers(subLayer);
-    //     // this.getSubLayerMap()[subLayer.subLayerId] = subLayer;
-    // },
-
-    // getSubLayer: function(subLayerId) {
-    //     var subLayers = this.getSubLayers();
-    //     return subLayers ? subLayers.get(subLayerId) : null;
-    // },
-
     getLayer: function(layer) {
         if (layer && layer.isLayer) {
             return layer;
@@ -465,29 +481,6 @@ Ext.define('Carto.CartoMap', {
             return null;
         }
     },
-
-    /**
-     * Removes a subLayer from the map based on the subLayer's id.
-     * @param  {} subLayerId
-     */
-    // removeSubLayer: function(subLayer, destroy) {
-    //     var subLayers = this.getSubLayers();
-        
-    //     if (subLayers) {
-    //         if (typeof subLayer === 'string') {
-    //             subLayer = subLayers.removeByKey(subLayer);
-    //         } else {
-    //             subLayers.remove(subLayer);
-    //         }
-    //     }
-    //     if (subLayer && subLayer.isSubLayer) {
-    //         subLayer.remove();
-    //         if (destroy) {
-    //             subLayer.destroy();
-    //         }
-    //     }
-    //     return subLayer;
-    // },
 
     validateOrder: function() {
         var layers = this.getLayers(),
@@ -548,14 +541,14 @@ Ext.define('Carto.CartoMap', {
                 layer.setCartoLayer(cartoLayer);
                 cartoLayer.on('loading', function() {
                     me.loading = true;
-                    if (me.getMaskWhileLoading()) {
-                        me.mask(me.getLoadingMessage());
+                    if (me.maskWhileLoading) {
+                        me.mask(me.loadingMessage);
                     }
                     layer.fireEvent('beforeload', layer, me);
                 });
                 cartoLayer.on('load', function() {
                     delete me.loading;
-                    if (me.getMaskWhileLoading()) {
+                    if (me.maskWhileLoading) {
                         me.unmask();
                     }
                     layer.fireEvent('load', layer, me);
@@ -585,7 +578,7 @@ Ext.define('Carto.CartoMap', {
         var toRend = this._needsRendering,
             i, len;
         if (toRend && toRend.length) {
-            for (i = 0, len = toRend.length; i < len; i++) {
+            for (i = 0; i < toRend.length; i++) {
                 this.createCartoLayer(toRend.splice(0,1)[0]);
             }
         }

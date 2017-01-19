@@ -8,10 +8,5 @@ Ext.define('Carto.sublayer.CartoDb', {
             sql: this.getSql(),
             cartocss: this.getCss()
         };
-    },
-
-    updateCartoLayer: function(cartoLayer) {
-        this.callParent(arguments);
-        this.mixins.dataContainingLayer.updateCartoLayer.call(this, cartoLayer);
     }
 });

@@ -95,7 +95,7 @@ Ext.onReady(function () {
                 layers: [{
                     subLayers: [{
                         bind: '{layer}',
-                        style: {
+                        css: {
                             type: 'intensity'
                         }
                     }]

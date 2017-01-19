@@ -24,7 +24,9 @@ Ext.define('Carto.sublayer.SubLayerBase', {
     },
 
     create: function() {
-        this.getLayer().createCartoSubLayer(this);
+        if (this.isReadyToBuild()) {
+            this.getLayer().createCartoSubLayer(this);
+        }
     },
 
     updateUsername: function(username, oldUsername) {
@@ -41,6 +43,11 @@ Ext.define('Carto.sublayer.SubLayerBase', {
                 layer.setUsername(username);
             }
         }
+    },
+
+    updateCartoLayer: function(cartoLayer) {
+        this.callParent(arguments);
+        this.mixins.dataContainingLayer.updateCartoLayer.call(this, cartoLayer);
     },
 
     getRefOwner: function() {

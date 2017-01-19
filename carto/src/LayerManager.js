@@ -27,5 +27,24 @@ Ext.define('Carto.LayerManager', {
             subLayer = Ext.Factory.sublayer(subLayer, defaultType);
         }
         return subLayer;
+    },
+
+    lookupCss: function(css) {
+        if (!css) {
+            return null;
+        }
+        if (Ext.isArray(css)) {
+            css = css.join('');
+        }
+        if (typeof css !== 'string' && !css.isCartoCss) {
+            if (!css.type) {
+                css = {
+                    type: 'shell',
+                    value: css
+                }
+            }
+            css = Ext.Factory.cartocss(css);
+        }
+        return css;
     }
 });

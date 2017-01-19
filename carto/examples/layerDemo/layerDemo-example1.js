@@ -85,7 +85,12 @@ Ext.onReady(function () {
                     type: 'torque',
                     bind: '{oregonFires}',
                     css: {
-                        type: 'heatmap'
+                        type: 'heatmap',
+                        value: {
+                            markerFillOpacity: .4,
+                            markerWidth: 25,
+                            case: null
+                        }
                     }
                 }]
             }]

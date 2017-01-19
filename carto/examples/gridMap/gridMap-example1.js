@@ -50,7 +50,7 @@ Ext.onReady(function () {
                 basemap: 'darkMatterLite',
                 layers: [{
                   subLayers: [{
-                      style: {
+                      css: {
                           type: 'intensity',
                       },
                       bind: '{layer}',

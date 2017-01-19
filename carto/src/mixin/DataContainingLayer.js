@@ -2,7 +2,15 @@ Ext.define('Carto.mixin.DataContainingLayer', {
     mixinId: 'dataContainingLayer',
 
     requires: [
-        'Carto.CartoCss'
+        'Carto.css.Css',
+        'Carto.css.Point',
+        'Carto.css.Line',
+        'Carto.css.Polygon',
+        'Carto.css.Intensity',
+        'Carto.css.HeatMap',
+        'Carto.css.Torque',
+        'Carto.css.TorqueCat',
+        'Carto.LayerManager'
     ],
 
     isDataContainingLayer: true,
@@ -17,6 +25,10 @@ Ext.define('Carto.mixin.DataContainingLayer', {
         interactivity: null
     },
 
+    isReadyToBuild: function() {
+        return !!(this.getSql() && this.getCss());
+    },
+    
     updateSql: function(sql) {
         if (sql) {
             var cartoLayer = this.getCartoLayer();
@@ -145,22 +157,24 @@ Ext.define('Carto.mixin.DataContainingLayer', {
 
     getCss: function() {
         var css = this.callParent();
-        if (css) {
+        if (css && typeof css !== 'string') {
             css = css.getCssString();
         }
         return css;
     },
 
     applyCss: function(css) {
-        if (css && !css.isCartoCss) {
-            css = new Carto.CartoCss(css);
-        }
-        return css;
+        return Carto.LayerManager.lookupCss(css);
     },
 
     updateCss: function(css) {
-        if (this.getCartoLayer() && css) {
-            this.getCartoLayer().setCartoCSS(css.getCssString());
+        if (css) {
+            var cartoLayer = this.getCartoLayer();
+            if (cartoLayer) {
+                cartoLayer.setCartoCSS(typeof css === 'string' ? css : css.getCssString());
+            } else {
+                this.create();
+            }
         }
     }
 
