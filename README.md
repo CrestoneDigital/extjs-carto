@@ -116,7 +116,8 @@ Carto has multiple different types of layers (see the [demo][Layer Demos] for so
 Name | Type | Default | Description
 --- | --- | --- | ---
 `cartoLayer` | Layer | null | The underlying Layer object.
-`username` | The username for the associated carto account.
+`layerId` | String | Auto-generated id | The key by which this layer can be retrieved, removed, etc.
+`username` | String | '' | The username for the associated carto account.
 `table` | String | '' | The table that this layer draws from.
 `hidden` | Boolean | false | Set to `true` to hide this layer.
 `mapZIndex` | Number | null | Defines the order that the layers are rendered on the `map`.
@@ -143,24 +144,54 @@ See also: [Carto.mixin.DataContainingLayer]
 
 ## Torque Layers
 
-Torque layers combine with [Carto.css.Torque] to create powerful layer objects that can accomplish much more than traditional map layers.
+Torque layers combine with [Carto.css.Torque][CartoCSS] to create powerful layer objects that can accomplish much more than traditional map layers.
 
 See also: [Carto.mixin.DataContainingLayer]
+
+##### Example Usage
+
+```javascript
+{
+    xtype: 'cartoMap',
+    layers: [{
+        type: 'torque',
+        css: {
+            type: 'torque' // or heatmap, torquecat
+        },
+        ...
+    }]
+}
+```
 
 ## DataContainingLayer.js
 
 Most layers (like [Carto.layer.Torque] and [Carto.sublayer.SubLayerBase]) contain data.
 This mixin defines the SQL, CartoCss, and store functionality for layers that render data.
 
-## Configs
+### Configs
 
 Name | Type | Default | Description
 --- | --- | --- | ---
 `store` | [Carto.CartoStore] | null | A [Carto.CartoStore] associated with this layer. If defined, it will create the SQL for this layer.
 `sql` | String | '' | SQL for this layer to use when it is created.
-`css` | Object<br>String<br>String[] | [Carto.css.Point] | The CartoCSS definition for this layer.
+`css` | Object<br>String<br>String[] | [Carto.css.Point][CartoCSS] | The CartoCSS definition for this layer.
 `selection` | [Ext.data.Model] | null | The layer's current selected record.
 `interactivity` | Object | null | Use `enable: true` to enable interactity on this layer.
+
+## CartoCSS
+
+CartoCSS defines how a layer is styled on the map.
+There are multiple types that are available to be used as-is or extended as appropriate.
+
+Name | Type | Description
+--- | --- | ---
+`point` | Carto.css.Point | A generic point-based style.
+`line` | Carto.css.Line | A generic line-based style.
+`polygon` | Carto.css.Polygon | A generic polygon-based style.
+`intensity` | Carto.css.Intensity | Point style with multiplying effect.
+`heatmap` | Carto.css.HeatMap | Torque style with multiplying effect.
+`torque` | Carto.css.Torque | Torque style for showing time-based effects.
+`torquecat` | Carto.css.TorqueCat | Torque style with added categorical grouping.
 
 ## CartoStore.js
 
@@ -253,6 +284,5 @@ Name | Type | Default | Description
 [Carto.layer.LayerGroup]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#layer-groups
 [Carto.mixin.DataContainingLayer]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#datacontaininglayerjs
 [Layer Demos]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#layer-demos
-[Carto.css.Torque]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#csstorquejs
+[CartoCSS]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#cartocss
 [Carto.CartoStore]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#cartostorejs
-[Carto.css.Point]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#csspointjs
