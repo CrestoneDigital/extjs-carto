@@ -7,8 +7,8 @@ Ext.define('Carto.CartoMap', {
 
     requires: [
         'Carto.CartoProxy',
-        'Carto.CartoStore',
-        'Carto.CartoLayer'
+        'Carto.CartoStore'
+        // 'Carto.CartoLayer'
     ],
 
     mixins: [
@@ -116,7 +116,9 @@ Ext.define('Carto.CartoMap', {
          */
         storesToLock: null,
 
-        subLayers: null
+        maskWhileLoading: false,
+
+        loadingMessage: 'Loading Tiles...'
 	},
     
     renderConfig: {
@@ -179,18 +181,18 @@ Ext.define('Carto.CartoMap', {
                 owner: this
             });
         }
-        layerCollection.add(layers);
-        return layerCollection;
-    },
-
-    applySubLayers: function(subLayers, subLayerCollection) {
-        if (!subLayerCollection) {
-            subLayerCollection = Ext.create('Carto.util.SubLayerCollection', {
-                owner: this
-            });
+        layers = layerCollection.add(layers);
+        if (layers) {
+            if (!Ext.isArray(layers)) {
+                layers = [layers];
+            }
+            for (var i = 0; i < layers.length; i++) {
+                if (layers[i].isLayerGroup) {
+                    layerCollection.add(layers[i].getSubLayers().getRange());
+                }
+            }
         }
-        subLayerCollection.add(subLayers);
-        return subLayerCollection;
+        return layerCollection;
     },
 
     updateSelection: function(selection) {
@@ -265,25 +267,25 @@ Ext.define('Carto.CartoMap', {
         this.callParent(arguments);
     },
 
-    beforeRender: function() {
-        this.callParent(arguments);
-        var layers = this.getLayers();
-        if (layers) {
-            layers.each(function(layer) {
-                layer.beforeRender();
-            });
-        }
-    },
+    // beforeRender: function() {
+    //     this.callParent(arguments);
+    //     var layers = this.getLayers();
+    //     if (layers) {
+    //         layers.each(function(layer) {
+    //             layer.beforeRender();
+    //         });
+    //     }
+    // },
 
-    onRender: function() {
-        this.callParent(arguments);
-        var layers = this.getLayers();
-        if (layers) {
-            layers.each(function(layer) {
-                layer.onRender(this);
-            });
-        }
-    },
+    // onRender: function() {
+    //     this.callParent(arguments);
+    //     var layers = this.getLayers();
+    //     if (layers) {
+    //         layers.each(function(layer) {
+    //             layer.onRender(this);
+    //         });
+    //     }
+    // },
 
 	/**
 	 * @param  {} t
@@ -325,11 +327,7 @@ Ext.define('Carto.CartoMap', {
         //         initialLayers[index] = me.createLayer(item);
         //     });
         // }
-    },
-
-    createLayer: function(config) {
-        config.map = this;
-        return Ext.create('Carto.CartoLayer', config);
+        me.flushSchedule();
     },
 
     addLayer: function(layer) {
@@ -338,10 +336,15 @@ Ext.define('Carto.CartoMap', {
 
     removeLayer: function(layer, destroy) {
         var layers = this.getLayers(),
-            subLayers = this.getSubLayers();
+            subLayers;
         layer = this.getLayer(layer);
         if (layer) {
-            subLayers.remove(layer.getSubLayers().getRange());
+            if (layer.isLayerContainer) {
+                subLayers = layer.getSubLayers();
+                if (subLayers) {
+                    layers.remove(subLayers.getRange());
+                }
+            }
             layers.remove(layer);
             layer.remove(destroy);
         }
@@ -443,15 +446,15 @@ Ext.define('Carto.CartoMap', {
     //     });
     // },
 
-    addSubLayer: function(subLayer) {
-        this.setSubLayers(subLayer);
-        // this.getSubLayerMap()[subLayer.subLayerId] = subLayer;
-    },
+    // addSubLayer: function(subLayer) {
+    //     this.setSubLayers(subLayer);
+    //     // this.getSubLayerMap()[subLayer.subLayerId] = subLayer;
+    // },
 
-    getSubLayer: function(subLayerId) {
-        var subLayers = this.getSubLayers();
-        return subLayers ? subLayers.get(subLayerId) : null;
-    },
+    // getSubLayer: function(subLayerId) {
+    //     var subLayers = this.getSubLayers();
+    //     return subLayers ? subLayers.get(subLayerId) : null;
+    // },
 
     getLayer: function(layer) {
         if (layer && layer.isLayer) {
@@ -467,24 +470,24 @@ Ext.define('Carto.CartoMap', {
      * Removes a subLayer from the map based on the subLayer's id.
      * @param  {} subLayerId
      */
-    removeSubLayer: function(subLayer, destroy) {
-        var subLayers = this.getSubLayers();
+    // removeSubLayer: function(subLayer, destroy) {
+    //     var subLayers = this.getSubLayers();
         
-        if (subLayers) {
-            if (typeof subLayer === 'string') {
-                subLayer = subLayers.removeByKey(subLayer);
-            } else {
-                subLayers.remove(subLayer);
-            }
-        }
-        if (subLayer && subLayer.isSubLayer) {
-            subLayer.remove();
-            if (destroy) {
-                subLayer.destroy();
-            }
-        }
-        return subLayer;
-    },
+    //     if (subLayers) {
+    //         if (typeof subLayer === 'string') {
+    //             subLayer = subLayers.removeByKey(subLayer);
+    //         } else {
+    //             subLayers.remove(subLayer);
+    //         }
+    //     }
+    //     if (subLayer && subLayer.isSubLayer) {
+    //         subLayer.remove();
+    //         if (destroy) {
+    //             subLayer.destroy();
+    //         }
+    //     }
+    //     return subLayer;
+    // },
 
     validateOrder: function() {
         var layers = this.getLayers(),
@@ -534,31 +537,63 @@ Ext.define('Carto.CartoMap', {
      */
     createCartoLayer: function(layer) {
         var me = this,
-            map = this.getCartoMap(),
-            cartoCfg = layer.buildCartoLayer();
-        cartodb.createLayer(map, cartoCfg, me.cartoOptions || {})
-        .addTo(map)
-        .done(function(cartoLayer) {
-            layer = me.getLayer(cartoLayer.model.attributes.ext_id);
-            layer.setMapZIndex(me.zIndex++);
-            layer.setCartoLayer(cartoLayer);
-            cartoLayer.on('loading', function() {
-                layer.fireEvent('beforeload', layer, me);
+            map = this.getCartoMap();
+        
+        if (map) {
+            cartodb.createLayer(map, layer.buildCartoLayer(), me.cartoOptions || {})
+            .addTo(map)
+            .done(function(cartoLayer) {
+                layer = me.getLayer(cartoLayer.model.attributes.ext_id);
+                layer.setMapZIndex(me.zIndex++);
+                layer.setCartoLayer(cartoLayer);
+                cartoLayer.on('loading', function() {
+                    me.loading = true;
+                    if (me.getMaskWhileLoading()) {
+                        me.mask(me.getLoadingMessage());
+                    }
+                    layer.fireEvent('beforeload', layer, me);
+                });
+                cartoLayer.on('load', function() {
+                    delete me.loading;
+                    if (me.getMaskWhileLoading()) {
+                        me.unmask();
+                    }
+                    layer.fireEvent('load', layer, me);
+                });
+                me.fireEvent('layercreated', me, layer);
+                if (me.zIndex === me.getLayers().length) {
+                    me.validateOrder();
+                }
+            })
+            .error(function(error) {
+                console.error(error);
             });
-            cartoLayer.on('load', function() {
-                layer.fireEvent('load', layer, me);
-            });
-            me.fireEvent('layercreated', me, layer);
-            if (me.zIndex === me.getLayers().length) {
-                me.validateOrder();
+        } else {
+            me.schedule(layer);
+        }
+    },
+
+    schedule: function(layer) {
+        if (this._needsRendering) {
+            this._needsRendering.push(layer);
+        } else {
+            this._needsRendering = [layer];
+        }
+    },
+
+    flushSchedule: function() {
+        var toRend = this._needsRendering,
+            i, len;
+        if (toRend && toRend.length) {
+            for (i = 0, len = toRend.length; i < len; i++) {
+                this.createCartoLayer(toRend.splice(0,1)[0]);
             }
-        })
-        .error(function(error) {
-            console.error(error);
-        });
+        }
     },
 
     doDestroy: function() {
+        delete this._needsRendering;
+
         var layers = this.getLayers();
         if (layers) {
             layers.each(function(layer) {

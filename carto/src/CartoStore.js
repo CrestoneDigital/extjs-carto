@@ -5,6 +5,8 @@ Ext.define('Carto.CartoStore',{
         'Carto.CartoProxy'
     ],
 
+    isCartoStore: true,
+
     listeners: {
         filterchange: function(store, filters) {
             var storeConfig    = this.getProxy().getCurrentConfig();
@@ -16,8 +18,11 @@ Ext.define('Carto.CartoStore',{
                     property: item._property
                 });
             }.bind(this));
-            if(this._subLayer){
-                this._subLayer.setSQL(this.sqlBuilder(storeConfig));
+            // if(this._subLayer){
+            //     this._subLayer.setSQL(this.sqlBuilder(storeConfig));
+            // }
+            if(this._layer){
+                this._layer.setSQL(this.sqlBuilder(storeConfig));
             }
         }
     },
@@ -57,20 +62,17 @@ Ext.define('Carto.CartoStore',{
         onlyTiles: false
     },
 
-    addSubLayerToProxy: function(subLayer) {
-        this.getProxy().addSubLayer(subLayer, this.autoLoad || this.isLoaded() || this.isLoading());
+    // addSubLayerToProxy: function(subLayer) {
+    //     this.getProxy().addSubLayer(subLayer, this.autoLoad || this.isLoaded() || this.isLoading());
+    // },
+
+    addLayerToProxy: function(layer) {
+        this.getProxy().addLayer(layer, this.autoLoad || this.isLoaded() || this.isLoading());
     },
     
-    getSubLayer: function() {
-        return this._subLayer;
-    },
-
-    destroy: function() {
-        var subLayer = this.getSubLayer();
-        subLayer.store = null;
-        subLayer.remove();
-        this.callParent();
-    },
+    // getSubLayer: function() {
+    //     return this._subLayer;
+    // },
 
     privates: {
         setLoadOptions: function(options) {

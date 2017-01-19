@@ -14,7 +14,7 @@ var mapController = Ext.create('Ext.app.ViewController',{
             map.removeLayer(map.getLayers().first(), true);
         }
         map.addLayer(value[0]);
-        map.getSubLayers().first().setStore(this.getStore('fireLayer'));
+        map.getLayer('layer').setStore(this.getStore('fireLayer'));
     }
 });
 
@@ -59,8 +59,8 @@ Ext.onReady(function () {
                 items: [{
                     text: 'Intensity',
                     value: {
-                        subLayers: [{
-                            // bind: '{fireLayer}',
+                        subLayers: {
+                            layerId: 'layer',
                             css: {
                                 type: 'intensity',
                                 markerFillOpacity: 0.05,
@@ -91,36 +91,19 @@ Ext.onReady(function () {
                                     markerWidth: 1
                                 }]
                             }
-                        }]
+                        }
                     },
                     pressed: true
                 }, {
                     text: 'Heatmap',
                     value: {
-                        subLayers: [{
-                            // bind: '{fireLayer}',
-                            type: 'torque',
-                            css: {
-                                type: 'heatmap'
-                            }
-                        }]
+                        type: 'torque',
+                        layerId: 'layer',
+                        css: {
+                            type: 'heatmap'
+                        }
                     }
                 }]
-                // xtype: 'combo',
-                // reference: 'layersBox',
-                // fieldLabel: 'Select Layer',
-                // displayField: 'name',
-                // valueField: 'value',
-                // store: {
-                //     data: [{
-
-                //     }]
-                // },
-                // // listeners: {
-                // //     selec: 'onLayerAdd'
-                // // },
-                // width: 350,
-                // editable: false
             }]
         }]
     });

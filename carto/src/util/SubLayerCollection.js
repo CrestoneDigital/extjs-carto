@@ -2,7 +2,8 @@ Ext.define('Carto.util.SubLayerCollection', {
     extend: 'Ext.util.Collection',
 
     requires: [
-        'Carto.CartoSubLayer'
+        'Carto.LayerManager',
+        'Carto.sublayer.CartoDb'
     ],
 
     isSubLayerCollection: true,
@@ -14,15 +15,10 @@ Ext.define('Carto.util.SubLayerCollection', {
 
     decodeSubLayer: function(subLayer) {
         var owner = this.getOwner();
-        if (!subLayer.isSubLayer) {
-            if (owner && owner.isLayer) {
-                subLayer.layer = owner;
-            }
-            subLayer = Ext.create('Carto.CartoSubLayer', subLayer);
-        } else if (owner && owner.isLayer) {
-            subLayer.setLayer(owner);
+        if (!subLayer.isSubLayer && owner && owner.isLayer) {
+            subLayer.layer = owner;
         }
-        return subLayer;
+        return Carto.LayerManager.lookupSubLayer(subLayer, 'cartodb');
     },
 
     getOwner: function() {

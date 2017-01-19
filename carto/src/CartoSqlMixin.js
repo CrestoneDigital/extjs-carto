@@ -123,9 +123,11 @@ Ext.define('Carto.CartoSqlMixin', {
                                 case '=':
                                     str += ' AND ' + property + ' ' + operator + ' ' + this.wrap(value);;
                                     break;
+                                case '<':
                                 case 'lt':
                                     str += ' AND ' + property + " < " + this.wrap(value);     
                                     break;
+                                case '>':
                                 case 'gt':
                                     str += ' AND ' + property + " > " + this.wrap(value);
                                     break;

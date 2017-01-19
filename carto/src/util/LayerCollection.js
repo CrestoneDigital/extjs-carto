@@ -2,7 +2,9 @@ Ext.define('Carto.util.LayerCollection', {
     extend: 'Ext.util.Collection',
 
     requires: [
-        'Carto.CartoLayer'
+        'Carto.LayerManager',
+        'Carto.layer.LayerGroup',
+        'Carto.layer.Torque'
     ],
 
     isLayerCollection: true,
@@ -14,15 +16,10 @@ Ext.define('Carto.util.LayerCollection', {
 
     decodeLayer: function(layer) {
         var owner = this.getOwner();
-        if (!layer.isLayer) {
-            if (owner && owner.isMap) {
-                layer.map = owner;
-            }
-            layer = Ext.create('Carto.CartoLayer', layer);
-        } else if (owner && owner.isMap) {
-            layer.setMap(owner);
+        if (!layer.isLayer && owner && owner.isMap) {
+            layer.map = owner;
         }
-        return layer;
+        return Carto.LayerManager.lookupLayer(layer);
     },
 
     getOwner: function() {

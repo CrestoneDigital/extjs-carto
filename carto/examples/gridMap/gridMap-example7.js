@@ -92,6 +92,7 @@ Ext.onReady(function () {
                 center: 'us',
                 reference: 'map',
                 basemap: 'darkMatterLite',
+                maskWhileLoading: true,
                 layers: [{
                     subLayers: [{
                         bind: '{layer}',

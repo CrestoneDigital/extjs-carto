@@ -37,7 +37,7 @@ Ext.define('Carto.CartoProxy', {
         enableBounds: false,
         enableLatLng: false,
         limit: null,
-        subLayers: null
+        layers: null
     },
 
     /**
@@ -147,16 +147,16 @@ Ext.define('Carto.CartoProxy', {
         this.setGroupBy(groupBy);
     },
 
-    addSubLayer: function(subLayer, load) {
+    addLayer: function(layer, load) {
         var table = this.getTable(),
-            subLayers = this.getSubLayers();
+            layers = this.getLayers();
         if (table) {
-            subLayer.setTable(table.getId());
+            layer.setTable(table.getId());
         }
-        subLayer.setUsername(this.getUsername());
-        this.setSubLayers(subLayer);
+        layer.setUsername(this.getUsername());
+        this.setLayers(layer);
         if (load && this._cachedSql) {
-            subLayer.setSql(this._cachedSql);
+            layer.setSql(this._cachedSql);
         }
     },
 
@@ -192,7 +192,7 @@ Ext.define('Carto.CartoProxy', {
      */
     buildRequest: function(operation) {
         var me = this,
-            subLayers = this.getSubLayers(),
+            layers = this.getLayers(),
             sqlParams = Ext.apply(me.getParams(operation), this.getCurrentConfig()),
             request, operationId, idParam, sql;
         switch (this.getMode()) {
@@ -206,11 +206,11 @@ Ext.define('Carto.CartoProxy', {
         if (this.getApiKey()) {
             params.api_key = this.getApiKey();
         }
-        if (subLayers) {
+        if (layers) {
             sql = this.sql ? sql : this.sqlBuilder(sqlParams, {isMap: true});
             if (sql !== me._cachedSql) {
-                subLayers.each(function(subLayer) {
-                    subLayer.setSql(sql);
+                layers.each(function(layer) {
+                    layer.setSql(sql);
                 });
             }
         }
@@ -295,19 +295,19 @@ Ext.define('Carto.CartoProxy', {
         return me.sendRequest(request);
     },
 
-    applySubLayers: function(subLayers, subLayerCollection) {
-        if (!subLayerCollection) {
-            subLayerCollection = Ext.create('Carto.util.SubLayerCollection');
+    applyLayers: function(layers, layerCollection) {
+        if (!layerCollection) {
+            layerCollection = Ext.create('Carto.util.LayerCollection');
         }
-        subLayerCollection.add(subLayers);
-        return subLayerCollection;
+        layerCollection.add(layers);
+        return layerCollection;
     },
 
     updateUsername: function(username) {
-        var subLayers = this.getSubLayers();
-        if (subLayers) {
-            subLayers.each(function(subLayer) {
-                subLayer.setUsername(username);
+        var layers = this.getLayers();
+        if (layers) {
+            layers.each(function(layer) {
+                layer.setUsername(username);
             }.bind(this));
         }
     },
@@ -320,10 +320,10 @@ Ext.define('Carto.CartoProxy', {
     },
 
     updateTable: function(table) {
-        var subLayers = this.getSubLayers();
-        if (table && subLayers) {
-            subLayers.each(function(subLayer) {
-                subLayer.setTable(table.getId());
+        var layers = this.getLayers();
+        if (table && layers) {
+            layers.each(function(layer) {
+                layer.setTable(table.getId());
             });
         }
     }

@@ -25,8 +25,16 @@ var mapController = Ext.create('Ext.app.ViewController',{
     initViewModel: function() {
         this.stores = [this.getStore('tables'), this.getStore('columns'), this.getStore('stats')];
         this.boxes  = [this.lookup('fieldBox'), this.lookup('sumBox'), this.lookup('avgBox'), this.lookup('minBox'), this.lookup('maxBox')];
+        if (this.boxes[0] === null) {
+            this._needsInit = true;
+        } else {
+            delete this._needsInit;
+        }
     },
     reset: function(all) {
+        if (this._needsInit) {
+            this.initViewModel();
+        }
         if (all) {
             this.lookup('tableBox').clearValue();
             this.getStore('tables').removeAll();
@@ -36,7 +44,7 @@ var mapController = Ext.create('Ext.app.ViewController',{
         }
         this.lookup('filtersView').removeAll();
         this.filtersAdded = false;
-        this.lookup('map').getSubLayer('changeableLayer').setCss(simplePointCss);
+        this.lookup('map').getLayer('changeableLayer').setCss(simplePointCss);
         this.lookup('cssOptions').setValue(simplePointCss);
         this.lookup('cssEditor').setValue(simplePointCss);
         this.getStore('columns').removeAll();
@@ -115,10 +123,10 @@ var mapController = Ext.create('Ext.app.ViewController',{
         }
     },
     onApplyCss: function() {
-        this.lookup('map').getSubLayer('changeableLayer').setCss(this.lookup('cssEditor').getValue());
+        this.lookup('map').getLayer('changeableLayer').setCss(this.lookup('cssEditor').getValue());
     },
     onCssToggle: function(seg) {
-        this.lookup('map').getSubLayer('changeableLayer').setCss(seg.getValue());
+        this.lookup('map').getLayer('changeableLayer').setCss(seg.getValue());
     },
     onAbout: function() {
         Ext.create('Ext.window.Window', {
@@ -250,7 +258,7 @@ Ext.onReady(function () {
                     storesToLock: ['statsStore'],
                     layers: [{
                         subLayers: [{
-                            subLayerId: 'changeableLayer',
+                            layerId: 'changeableLayer',
                             bind: '{subLayer}'
                         }]
                     }]
