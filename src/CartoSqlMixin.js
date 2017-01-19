@@ -53,7 +53,7 @@ Ext.define('Carto.CartoSqlMixin', {
         var buster = Date.now(),
             where = '';
         if (params.sqlCacheBuster) {
-            where +=  linker + buster + '=' + buster;
+            where += linker + buster + '=' + buster;
         }
         // sql += ' WHERE ' + (params.sqlCacheBuster ? buster + '=' + buster : '1=1');
         if (on && on.length) {
@@ -104,38 +104,38 @@ Ext.define('Carto.CartoSqlMixin', {
         if (tmpAr && tmpAr.length > 0) {
             tmpAr.forEach(function(rec) {
                 if (rec.sqlBuilder) {
-                    str += ' AND ' + rec.sqlBuilder(params);
+                    str += this.linker + rec.sqlBuilder(params);
                 } else if (rec.sql) {
-                    str += ' AND ' + rec.sql;
+                    str += this.linker + rec.sql;
                 } else {
                     property = rec.getProperty();
                     value = rec.getValue();
                     operator = rec.getOperator();
                     if (property && !Ext.isEmpty(value)) {
                         if (value instanceof RegExp) {
-                            str += ' AND ' + property + " ~* '" + value.toString().slice(1,-1) + "'";
+                            str += this.linker + property + " ~* '" + value.toString().slice(1,-1) + "'";
                         } else {
                             var operator = (operator) ? operator : '=';
                             switch(operator) {
                                 case 'like':
-                                    str += ' AND ' + property + ' ' + operator + " '" + value + "%' ";
+                                    str += this.linker + property + ' ' + operator + " '" + value + "%' ";
                                     break;
                                 case '=':
-                                    str += ' AND ' + property + ' ' + operator + ' ' + this.wrap(value);;
+                                    str += this.linker + property + ' ' + operator + ' ' + this.wrap(value);;
                                     break;
                                 case '<':
                                 case 'lt':
-                                    str += ' AND ' + property + " < " + this.wrap(value);     
+                                    str += this.linker + property + " < " + this.wrap(value);     
                                     break;
                                 case '>':
                                 case 'gt':
-                                    str += ' AND ' + property + " > " + this.wrap(value);
+                                    str += this.linker + property + " > " + this.wrap(value);
                                     break;
                                 case 'eq':
                                     if(typeof value === 'string'){
-                                        str += ' AND ' + property + '::date  ' + " = '"  + value + "'::date";
+                                        str += this.linker + property + '::date  ' + " = '"  + value + "'::date";
                                     }else{
-                                        str += ' AND ' + property + ' ' + " = "  + value;
+                                        str += this.linker + property + ' ' + " = "  + value;
                                     }
                                     break;
                                 case 'in':
@@ -148,10 +148,10 @@ Ext.define('Carto.CartoSqlMixin', {
                                 case 'range':
                                     if (Ext.isArray(value) && value.length === 2) {
                                         if (value[0]) {
-                                            str += ' AND ' + property + ' > ' + this.wrap(value[0]);
+                                            str += this.linker + property + ' > ' + this.wrap(value[0]);
                                         }
                                         if (value[1]) {
-                                            str += ' AND ' + property + ' < ' + this.wrap(value[1]);
+                                            str += this.linker + property + ' < ' + this.wrap(value[1]);
                                         }
                                     }
                                     break;
@@ -163,7 +163,7 @@ Ext.define('Carto.CartoSqlMixin', {
                                         validRegExp = false;
                                     }
                                     if (validRegExp) {
-                                        str += ' AND ' + property + " ~* '" + value + "'";
+                                        str += this.linker + property + " ~* '" + value + "'";
                                     } else {
                                         console.error("Invalid Regular Expression '" + value + "'. Skipping.");
                                     }
@@ -175,10 +175,10 @@ Ext.define('Carto.CartoSqlMixin', {
                     } else if (property && operator && !rec.getDisableOnEmpty()) {
                         switch (operator) {
                             case 'null':
-                                str += ' AND ' + property + ' IS NULL';
+                                str += this.linker + property + ' IS NULL';
                                 break;
                             case 'notnull':
-                                str += ' AND ' + property + ' IS NOT NULL';
+                                str += this.linker + property + ' IS NOT NULL';
                                 break;
                             default:
                                 console.warn("Unknown operator '" + operator + "'. Skipping.")
@@ -240,7 +240,7 @@ Ext.define('Carto.CartoSqlMixin', {
     whereClauseBuilder: function(where, prefix) {
         var wheres = this.whereClauseLoop(where, prefix);
         if (wheres.length) {
-            return ' AND ' + wheres.join(' AND ');
+            return this.linker + wheres.join(this.linker);
         } else {
             return '';
         }

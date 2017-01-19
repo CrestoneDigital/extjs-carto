@@ -32,7 +32,6 @@ Ext.define('Carto.CartoProxy', {
         username: '',
         mode: null,
         sqlCacheBuster: false,
-        mapLock: false,
         enableData: true,
         enableBounds: false,
         enableLatLng: false,
