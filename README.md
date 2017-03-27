@@ -300,3 +300,7 @@ Name | Type | Default | Description
 [Layer Demos]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#layer-demos
 [CartoCSS]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#cartocss
 [Carto.CartoStore]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#cartostorejs
+
+# Presentations
+
+<iframe src="//www.slideshare.net/slideshow/embed_code/key/1lsa3afC6oglIL" width="595" height="485" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe> <div style="margin-bottom:5px"> <strong> <a href="//www.slideshare.net/senchainc/senchacon-2016-integrating-geospatial-maps-big-data-using-cartodb-via-ext-js-components-michael-giddens" title="SenchaCon 2016: Integrating Geospatial Maps &amp; Big Data Using CartoDB via Ext JS Components - Michael Giddens" target="_blank">SenchaCon 2016: Integrating Geospatial Maps &amp; Big Data Using CartoDB via Ext JS Components - Michael Giddens</a> </strong> from <strong><a target="_blank" href="//www.slideshare.net/senchainc">Sencha</a></strong> </div>
