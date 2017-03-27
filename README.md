@@ -304,3 +304,4 @@ Name | Type | Default | Description
 # Presentations
 
 ### [SlideShare - SenchaCon 2016: Integrating Geospatial Maps & Big Data Using CARTO via Ext JS Components](https://www.slideshare.net/senchainc/senchacon-2016-integrating-geospatial-maps-big-data-using-cartodb-via-ext-js-components-michael-giddens/1)
+[Video can be found here of the talk.](https://www.senchacon.com/videos-slides/#Top)
