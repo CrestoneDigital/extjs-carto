@@ -302,5 +302,5 @@ Name | Type | Default | Description
 [Carto.CartoStore]: https://github.com/CrestoneDigital/extjs-carto/blob/master/README.md#cartostorejs
 
 # Presentations
-[SlideShare - SenchaCon 2016: Integrating Geospatial Maps & Big Data Using CARTO via Ext JS Components]:
-https://www.slideshare.net/senchainc/senchacon-2016-integrating-geospatial-maps-big-data-using-cartodb-via-ext-js-components-michael-giddens/1
+
+### [SlideShare - SenchaCon 2016: Integrating Geospatial Maps & Big Data Using CARTO via Ext JS Components](https://www.slideshare.net/senchainc/senchacon-2016-integrating-geospatial-maps-big-data-using-cartodb-via-ext-js-components-michael-giddens/1)
