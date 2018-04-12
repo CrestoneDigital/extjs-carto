@@ -3,7 +3,7 @@ Ext.define('Carto.CartoBasemaps',{
     basemaps: [{
         itemId: 'positronLite',
         name: 'Positron (lite)',
-        url: 'http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+        url: 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://cartodb.com/attributions">CartoDB</a>'
     },{
         itemId: 'positron',
