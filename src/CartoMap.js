@@ -533,7 +533,7 @@ Ext.define('Carto.CartoMap', {
             map = this.getCartoMap();
         
         if (map) {
-            cartodb.createLayer(map, layer.buildCartoLayer(), me.cartoOptions || {})
+            cartodb.createLayer(map, layer.buildCartoLayer(), me.cartoOptions || {https: true})
             .addTo(map)
             .done(function(cartoLayer) {
                 layer = me.getLayer(cartoLayer.model.attributes.ext_id);
