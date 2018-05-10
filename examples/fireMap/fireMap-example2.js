@@ -109,10 +109,12 @@ var mapController = Ext.create('Ext.app.ViewController',{
         }
     },
     showAllFires: function() {
-        this.lookup('map').getSubLayer('firesLayer').setCss(allFiresCss);
+        this.lookup('map').getLayer('firesMainLayer').getSubLayers().items[0].setCss(allFiresCss);
+        // this.lookup('map').getSubLayer('firesLayer').setCss(allFiresCss);
     },
     showCauseOfFires: function() {
-        this.lookup('map').getSubLayer('firesLayer').setCss(causeOfFiresCss);
+        this.lookup('map').getLayer('firesMainLayer').getSubLayers().items[0].setCss(causeOfFiresCss);
+        // this.lookup('map').getSubLayer('firesLayer').setCss(causeOfFiresCss);
     },
     onFilterChange: function(field, newValue, oldValue) {
         var filter = field.getReference(),
@@ -238,6 +240,7 @@ Ext.onReady(function () {
                     },
                     storesToLock: ['firesStats', 'totalsStore'],
                     layers: [{
+                        layerId: 'firesMainLayer',
                         subLayers: [{
                             subLayerId: 'firesLayer',
                             reference: 'testRef',

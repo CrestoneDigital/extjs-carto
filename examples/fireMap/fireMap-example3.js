@@ -10,11 +10,18 @@ Ext.require([
 var mapController = Ext.create('Ext.app.ViewController',{
     onLayerChange: function(segButton, value, oldValue){
         var map = this.lookup('map');
-        if (oldValue.length) {
+        if (oldValue) {
             map.removeLayer(map.getLayers().first(), true);
         }
-        map.addLayer(value[0]);
+        map.addLayer(value);
         map.getLayer('layer').setStore(this.getStore('fireLayer'));
+
+        // var map = this.lookup('map');
+        // if (oldValue.length) {
+        //     map.removeLayer(map.getLayers().first(), true);
+        // }
+        // map.addLayer(value[0]);
+        // map.getLayer('layer').setStore(this.getStore('fireLayer'));
     }
 });
 
